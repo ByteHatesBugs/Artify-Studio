@@ -19,6 +19,7 @@ export interface RenderJob {
   outputName: string;
   status: JobStatus;
   progress: number;
+  attempts: number;
   error?: string;
 }
 
@@ -37,4 +38,16 @@ export interface SelectedImage {
   id: string;
   file: File;
   previewUrl: string;
+}
+
+export interface HealthStatus {
+  status: 'ok' | 'degraded';
+  service: string;
+  engine: {
+    ready: boolean;
+    version?: string;
+    error?: string;
+    checkedAt: string;
+  };
+  timestamp: string;
 }
