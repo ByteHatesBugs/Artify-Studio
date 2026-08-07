@@ -9,6 +9,8 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Batch upload for up to 50 images with client- and server-side validation
 - Duplicate detection plus drag, keyboard, and button-based source reordering
 - Five motion profiles with a live first-image preview: still, zoom in, zoom out, pan left, and pan right
+- Exact effect start and end timing with motion held before and after the selected window
+- Batch-wide profiles that apply identical timing, motion, framing, and quality to every selected image
 - Contain and cover framing modes with configurable canvas background color
 - Draft, balanced, and high encoding profiles that change FFmpeg speed and output quality
 - Optional fade-in and fade-out transitions for polished clips
@@ -21,6 +23,7 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Safe cancellation, failed-job retries, individual downloads, and batch ZIP archives
 - Filterable render history with loading, empty, busy, confirmation, and notification states
 - Responsive, keyboard-accessible interface
+- Lazy preview decoding and viewport-aware rendering for smooth large-batch editing
 - Automatic input cleanup and configurable output retention
 
 ## Architecture
