@@ -143,4 +143,4 @@ The built-in journal is appropriate for one Artify API instance. For a multi-ins
 
 ## License
 
-No license has been selected yet. Add one before distributing the project publicly.
+Artify Studio is available under the [MIT License](LICENSE). Copyright © 2026 ByteHatesBugs.
