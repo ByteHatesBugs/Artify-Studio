@@ -3,6 +3,7 @@ dist/
 .env
 .env.local
 coverage/
+*.tsbuildinfo
 *.log
 .DS_Store
 Thumbs.db
@@ -10,7 +11,9 @@ Thumbs.db
 .idea/
 
 # Runtime media is intentionally never versioned.
-storage/uploads/
-storage/outputs/
-storage/archives/
+storage/*
 !storage/.gitkeep
+
+# TypeScript may materialize these beside the Vite config in build mode.
+apps/web/vite.config.js
+apps/web/vite.config.d.ts
