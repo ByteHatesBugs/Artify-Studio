@@ -1,8 +1,9 @@
-import { Clapperboard, Clock3, Gauge, MonitorUp, Play, RotateCcw, Sparkles } from 'lucide-react';
+import { Blend, Clapperboard, Clock3, Crop, Eye, Gauge, MonitorUp, Play, RotateCcw, Sparkles } from 'lucide-react';
 import type { RenderSettings } from '../types';
 
 interface SettingsPanelProps {
   settings: RenderSettings;
+  previewImage?: string;
   imageCount: number;
   isSubmitting: boolean;
   engineReady: boolean;
@@ -19,14 +20,15 @@ const resolutions = [
 ] as const;
 
 const profiles: Array<{ label: string; detail: string; settings: Partial<RenderSettings> }> = [
-  { label: 'Campaign', detail: 'Full HD · MP4', settings: { resolution: '1080p', format: 'mp4', motion: 'zoom-in', duration: 5, fps: 30 } },
-  { label: 'Social', detail: 'Portrait · MP4', settings: { resolution: 'portrait', format: 'mp4', motion: 'zoom-in', duration: 5, fps: 30 } },
-  { label: 'Lightweight', detail: 'HD · WebM', settings: { resolution: '720p', format: 'webm', motion: 'still', duration: 3, fps: 24 } },
+  { label: 'Campaign', detail: 'Full HD · MP4', settings: { resolution: '1080p', format: 'mp4', motion: 'zoom-in', duration: 5, fps: 30, fit: 'cover', quality: 'high', fade: true } },
+  { label: 'Social', detail: 'Portrait · MP4', settings: { resolution: 'portrait', format: 'mp4', motion: 'zoom-in', duration: 5, fps: 30, fit: 'cover', quality: 'balanced', fade: true } },
+  { label: 'Lightweight', detail: 'HD · WebM', settings: { resolution: '720p', format: 'webm', motion: 'still', duration: 3, fps: 24, fit: 'contain', quality: 'draft', fade: false } },
 ];
 
-export function SettingsPanel({ settings, imageCount, isSubmitting, engineReady, onChange, onReset, onSubmit }: SettingsPanelProps) {
+export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting, engineReady, onChange, onReset, onSubmit }: SettingsPanelProps) {
   const update = <K extends keyof RenderSettings>(key: K, value: RenderSettings[K]) => onChange({ ...settings, [key]: value });
-  const estimatedSeconds = Math.ceil(imageCount * settings.duration / 2);
+  const qualityFactor = settings.quality === 'draft' ? 0.65 : settings.quality === 'high' ? 1.6 : 1;
+  const estimatedSeconds = Math.ceil((imageCount * settings.duration / 2) * qualityFactor);
 
   return (
     <aside className="settings-card" aria-labelledby="settings-heading">
@@ -45,6 +47,20 @@ export function SettingsPanel({ settings, imageCount, isSubmitting, engineReady,
             <strong>{profile.label}</strong><span>{profile.detail}</span>
           </button>
         ))}
+      </div>
+
+      <div className="preview-heading"><span><Eye size={14} /> Live preview</span><small>First frame</small></div>
+      <div className={`motion-preview preview-${settings.resolution}`} style={{ backgroundColor: settings.background }}>
+        {previewImage ? (
+          <img
+            key={`${previewImage}-${settings.motion}-${settings.fit}-${settings.fade}`}
+            className={`motion-${settings.motion} ${settings.fade ? 'with-fade' : ''}`}
+            src={previewImage}
+            alt="Motion preview of the first selected image"
+            style={{ objectFit: settings.fit }}
+          />
+        ) : <div className="preview-placeholder"><Sparkles size={19} /><span>Add an image to preview motion</span></div>}
+        <span className="preview-badge">{settings.fit} · {settings.motion.replace('-', ' ')}</span>
       </div>
 
       <label className="field-label" htmlFor="batch-name">Batch name</label>
@@ -79,6 +95,24 @@ export function SettingsPanel({ settings, imageCount, isSubmitting, engineReady,
         ))}
       </div>
 
+      <div className="field-grid">
+        <label className="field-control">
+          <span><Crop size={15} /> Framing</span>
+          <select value={settings.fit} onChange={(event) => update('fit', event.target.value as RenderSettings['fit'])}>
+            <option value="contain">Fit entire image</option>
+            <option value="cover">Fill and crop</option>
+          </select>
+        </label>
+        <label className="field-control">
+          <span><Gauge size={15} /> Quality</span>
+          <select value={settings.quality} onChange={(event) => update('quality', event.target.value as RenderSettings['quality'])}>
+            <option value="draft">Draft · Fast</option>
+            <option value="balanced">Balanced</option>
+            <option value="high">High · Detailed</option>
+          </select>
+        </label>
+      </div>
+
       <label className="field-control full">
         <span><Sparkles size={15} /> Motion</span>
         <select value={settings.motion} onChange={(event) => update('motion', event.target.value as RenderSettings['motion'])}>
@@ -89,6 +123,11 @@ export function SettingsPanel({ settings, imageCount, isSubmitting, engineReady,
           <option value="still">Still frame</option>
         </select>
       </label>
+
+      <button className="switch-row" type="button" role="switch" aria-checked={settings.fade} onClick={() => update('fade', !settings.fade)}>
+        <span className="switch-copy"><Blend size={15} /><span><strong>Fade transition</strong><small>Ease the video in and out</small></span></span>
+        <span className={`switch ${settings.fade ? 'on' : ''}`}><span /></span>
+      </button>
 
       <div className="field-grid">
         <label className="field-control">
@@ -107,6 +146,7 @@ export function SettingsPanel({ settings, imageCount, isSubmitting, engineReady,
       <div className="render-summary">
         <div><span>Outputs</span><strong>{imageCount || '—'} videos</strong></div>
         <div><span>Est. processing</span><strong>{imageCount ? `~${estimatedSeconds}s` : '—'}</strong></div>
+        <div><span>Profile</span><strong>{settings.quality}</strong></div>
       </div>
       <button className="primary-button" type="button" onClick={onSubmit} disabled={!imageCount || isSubmitting || !settings.name.trim() || !engineReady}>
         {isSubmitting ? <span className="spinner" /> : <Play size={17} fill="currentColor" />}
