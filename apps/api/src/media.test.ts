@@ -4,6 +4,8 @@ import type { RenderJob, RenderSettings } from './types.js';
 
 const settings: RenderSettings = {
   duration: 5,
+  effectStart: 1,
+  effectEnd: 4,
   fps: 30,
   resolution: '1080p',
   motion: 'zoom-in',
@@ -19,8 +21,15 @@ describe('media command construction', () => {
     const filter = buildVideoFilter(settings);
     expect(filter).toContain('scale=1920:1080');
     expect(filter).toContain('zoompan');
+    expect(filter).toContain('clip((on-30)/90,0,1)');
     expect(filter).toContain('fps=30');
     expect(filter).toContain('fade=t=in');
+  });
+
+  it('holds motion outside the selected effect window', () => {
+    const filter = buildVideoFilter({ ...settings, fps: 24, effectStart: 1.5, effectEnd: 3.5, motion: 'pan-right' });
+    expect(filter).toContain('clip((on-36)/48,0,1)');
+    expect(filter).toContain('(iw-iw/zoom)*clip');
   });
 
   it('passes file paths as separate process arguments', () => {
