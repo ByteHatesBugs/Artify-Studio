@@ -1,10 +1,14 @@
 export const MOTION_EFFECTS = ['still', 'zoom-in', 'zoom-out', 'pan-left', 'pan-right'] as const;
 export const RESOLUTIONS = ['720p', '1080p', 'square', 'portrait'] as const;
 export const OUTPUT_FORMATS = ['mp4', 'webm'] as const;
+export const FIT_MODES = ['contain', 'cover'] as const;
+export const QUALITY_PROFILES = ['draft', 'balanced', 'high'] as const;
 
 export type MotionEffect = (typeof MOTION_EFFECTS)[number];
 export type Resolution = (typeof RESOLUTIONS)[number];
 export type OutputFormat = (typeof OUTPUT_FORMATS)[number];
+export type FitMode = (typeof FIT_MODES)[number];
+export type QualityProfile = (typeof QUALITY_PROFILES)[number];
 export type JobStatus = 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
 export interface RenderSettings {
@@ -13,6 +17,9 @@ export interface RenderSettings {
   resolution: Resolution;
   motion: MotionEffect;
   format: OutputFormat;
+  fit: FitMode;
+  quality: QualityProfile;
+  fade: boolean;
   background: string;
 }
 
