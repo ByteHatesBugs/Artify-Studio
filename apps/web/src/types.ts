@@ -8,6 +8,8 @@ export type JobStatus = 'queued' | 'processing' | 'completed' | 'failed' | 'canc
 export interface RenderSettings {
   name: string;
   duration: number;
+  effectStart: number;
+  effectEnd: number;
   fps: number;
   resolution: Resolution;
   motion: MotionEffect;
