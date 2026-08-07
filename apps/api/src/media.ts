@@ -18,12 +18,16 @@ const qualityProfiles = {
 export const buildVideoFilter = (settings: RenderSettings) => {
   const [width, height] = dimensions[settings.resolution];
   const frames = Math.ceil(settings.duration * settings.fps);
+  const workingScale = settings.motion === 'still' ? 1 : 2;
+  const canvasWidth = width * workingScale;
+  const canvasHeight = height * workingScale;
   const effectStartFrame = Math.round(settings.effectStart * settings.fps);
   const effectFrames = Math.max(1, Math.round((settings.effectEnd - settings.effectStart) * settings.fps));
-  const effectProgress = `clip((on-${effectStartFrame})/${effectFrames},0,1)`;
+  const linearProgress = `clip((on-${effectStartFrame})/${effectFrames},0,1)`;
+  const effectProgress = `(${linearProgress})*(${linearProgress})*(3-2*(${linearProgress}))`;
   const base = settings.fit === 'cover'
-    ? `scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height}`
-    : `scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:${settings.background}`;
+    ? `scale=${canvasWidth}:${canvasHeight}:force_original_aspect_ratio=increase,crop=${canvasWidth}:${canvasHeight}`
+    : `scale=${canvasWidth}:${canvasHeight}:force_original_aspect_ratio=decrease,pad=${canvasWidth}:${canvasHeight}:(ow-iw)/2:(oh-ih)/2:${settings.background}`;
   const fadeDuration = Math.min(0.5, settings.duration / 4);
   const fades = settings.fade
     ? `,fade=t=in:st=0:d=${fadeDuration},fade=t=out:st=${Math.max(0, settings.duration - fadeDuration)}:d=${fadeDuration}`
@@ -32,14 +36,14 @@ export const buildVideoFilter = (settings: RenderSettings) => {
   if (settings.motion === 'still') return `${base}${fades},format=yuv420p`;
 
   const zoom = settings.motion === 'zoom-out'
-    ? `1.12-${effectProgress}*0.12`
-    : `1+${effectProgress}*0.12`;
+    ? `1.08-${effectProgress}*0.08`
+    : settings.motion.startsWith('pan-') ? '1.08' : `1+${effectProgress}*0.08`;
   const x = settings.motion === 'pan-left'
     ? `(iw-iw/zoom)*(1-${effectProgress})`
     : settings.motion === 'pan-right'
       ? `(iw-iw/zoom)*${effectProgress}`
-      : 'iw/2-(iw/zoom/2)';
-  const y = 'ih/2-(ih/zoom/2)';
+      : '(iw-iw/zoom)/2';
+  const y = '(ih-ih/zoom)/2';
 
   return `${base},zoompan=z='${zoom}':x='${x}':y='${y}':d=${frames}:s=${width}x${height}:fps=${settings.fps}${fades},format=yuv420p`;
 };
