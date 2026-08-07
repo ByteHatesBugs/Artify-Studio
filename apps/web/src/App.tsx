@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { CircleHelp, Github, ShieldCheck, WandSparkles, Zap } from 'lucide-react';
+import { CircleHelp, Github, ShieldCheck, WandSparkles, X, Zap } from 'lucide-react';
 import { cancelBatch, createBatch, deleteBatch, getHealth, listBatches, retryBatch } from './api';
 import { BatchQueue } from './components/BatchQueue';
+import { ConfirmDialog } from './components/ConfirmDialog';
 import { Logo } from './components/Logo';
 import { SettingsPanel } from './components/SettingsPanel';
 import { UploadZone } from './components/UploadZone';
@@ -17,13 +18,29 @@ const initialSettings: RenderSettings = {
   background: '#09090b',
 };
 
+const loadSettings = (): RenderSettings => {
+  try {
+    const saved = JSON.parse(localStorage.getItem('artify:render-settings') ?? '{}') as Partial<RenderSettings>;
+    return { ...initialSettings, ...saved };
+  } catch {
+    return initialSettings;
+  }
+};
+
+type PendingAction = { kind: 'cancel' | 'delete'; id: string; name: string };
+const fileKey = (file: File) => `${file.name}:${file.size}:${file.lastModified}`;
+
 export default function App() {
   const [images, setImages] = useState<SelectedImage[]>([]);
-  const [settings, setSettings] = useState(initialSettings);
+  const [settings, setSettings] = useState(loadSettings);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [health, setHealth] = useState<HealthStatus | null>(null);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [busyIds, setBusyIds] = useState<Set<string>>(() => new Set());
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [notice, setNotice] = useState<{ tone: 'error' | 'success'; message: string } | null>(null);
+  const noticeTimerRef = useRef<number | undefined>(undefined);
   const imagesRef = useRef(images);
   imagesRef.current = images;
 
@@ -33,6 +50,8 @@ export default function App() {
       setBatches(data.batches);
     } catch {
       // Keep the current queue visible during a brief server interruption.
+    } finally {
+      setIsHistoryLoading(false);
     }
   }, []);
 
@@ -53,17 +72,31 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, [batches, refresh]);
 
-  useEffect(() => () => imagesRef.current.forEach((image) => URL.revokeObjectURL(image.previewUrl)), []);
+  useEffect(() => {
+    try {
+      window.localStorage?.setItem('artify:render-settings', JSON.stringify(settings));
+    } catch {
+      // Private browsing and embedded contexts may disable local preferences.
+    }
+  }, [settings]);
+
+  useEffect(() => () => {
+    imagesRef.current.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+    if (noticeTimerRef.current) window.clearTimeout(noticeTimerRef.current);
+  }, []);
 
   const showNotice = (tone: 'error' | 'success', message: string) => {
     setNotice({ tone, message });
-    window.setTimeout(() => setNotice(null), 4500);
+    if (noticeTimerRef.current) window.clearTimeout(noticeTimerRef.current);
+    noticeTimerRef.current = window.setTimeout(() => setNotice(null), 4500);
   };
 
   const addImages = (files: File[]) => {
     const supported = files.filter((file) => ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) && file.size <= 25 * 1024 * 1024);
+    const existing = new Set(images.map((image) => fileKey(image.file)));
+    const unique = supported.filter((file) => !existing.has(fileKey(file)) && existing.add(fileKey(file)));
     const available = Math.max(0, 50 - images.length);
-    const accepted = supported.slice(0, available);
+    const accepted = unique.slice(0, available);
     if (accepted.length !== files.length) showNotice('error', 'Some files were skipped. Use JPG, PNG, or WebP images under 25 MB.');
     setImages((current) => [...current, ...accepted.map((file) => ({ id: crypto.randomUUID(), file, previewUrl: URL.createObjectURL(file) }))]);
   };
@@ -73,6 +106,20 @@ export default function App() {
       const target = current.find((image) => image.id === id);
       if (target) URL.revokeObjectURL(target.previewUrl);
       return current.filter((image) => image.id !== id);
+    });
+  };
+
+  const moveImage = (id: string, targetIndex: number) => {
+    setImages((current) => {
+      const sourceIndex = current.findIndex((image) => image.id === id);
+      if (sourceIndex < 0) return current;
+      const destination = Math.max(0, Math.min(targetIndex, current.length - 1));
+      if (sourceIndex === destination) return current;
+      const reordered = [...current];
+      const [moved] = reordered.splice(sourceIndex, 1);
+      if (!moved) return current;
+      reordered.splice(destination, 0, moved);
+      return reordered;
     });
   };
 
@@ -97,32 +144,62 @@ export default function App() {
     }
   };
 
+  const setActionBusy = (id: string, busy: boolean) => setBusyIds((current) => {
+    const next = new Set(current);
+    if (busy) next.add(id); else next.delete(id);
+    return next;
+  });
+
   const stop = async (id: string) => {
+    setActionBusy(id, true);
     try {
       await cancelBatch(id);
       await refresh();
+      showNotice('success', 'The active render was stopped safely. You can retry it at any time.');
     } catch (error) {
       showNotice('error', error instanceof Error ? error.message : 'The batch could not be stopped.');
+    } finally {
+      setActionBusy(id, false);
     }
   };
 
   const removeBatch = async (id: string) => {
+    setActionBusy(id, true);
     try {
       await deleteBatch(id);
       setBatches((current) => current.filter((batch) => batch.id !== id));
+      showNotice('success', 'Batch and associated media were deleted.');
     } catch (error) {
       showNotice('error', error instanceof Error ? error.message : 'The batch could not be deleted.');
+    } finally {
+      setActionBusy(id, false);
     }
   };
 
   const retry = async (id: string) => {
+    setActionBusy(id, true);
     try {
       const { batch, retried } = await retryBatch(id);
       setBatches((current) => current.map((candidate) => candidate.id === id ? batch : candidate));
       showNotice('success', `${retried} render${retried === 1 ? '' : 's'} returned to the queue.`);
     } catch (error) {
       showNotice('error', error instanceof Error ? error.message : 'The batch could not be retried.');
+    } finally {
+      setActionBusy(id, false);
     }
+  };
+
+  const requestAction = (kind: PendingAction['kind'], id: string) => {
+    const batch = batches.find((candidate) => candidate.id === id);
+    if (batch) setPendingAction({ kind, id, name: batch.name });
+  };
+
+  const confirmAction = async () => {
+    if (!pendingAction) return;
+    const action = pendingAction;
+    if (action.kind === 'cancel') await stop(action.id);
+    else await removeBatch(action.id);
+    setPendingAction(null);
   };
 
   return (
@@ -156,15 +233,28 @@ export default function App() {
         </section>
 
         <section className="studio-layout" id="workspace">
-          <UploadZone images={images} disabled={isSubmitting} onAdd={addImages} onRemove={removeImage} onClear={clearImages} />
-          <SettingsPanel settings={settings} imageCount={images.length} isSubmitting={isSubmitting} engineReady={health?.engine.ready === true} onChange={setSettings} onSubmit={submit} />
+          <UploadZone images={images} disabled={isSubmitting} onAdd={addImages} onRemove={removeImage} onMove={moveImage} onClear={clearImages} />
+          <SettingsPanel settings={settings} imageCount={images.length} isSubmitting={isSubmitting} engineReady={health?.engine.ready === true} onChange={setSettings} onReset={() => setSettings({ ...initialSettings, name: settings.name })} onSubmit={submit} />
         </section>
 
-        <BatchQueue batches={batches} onCancel={stop} onRetry={retry} onDelete={removeBatch} />
+        <BatchQueue batches={batches} loading={isHistoryLoading} busyIds={busyIds} onCancel={(id) => requestAction('cancel', id)} onRetry={retry} onDelete={(id) => requestAction('delete', id)} />
       </main>
 
       <footer><Logo /><p>Batch motion production for focused creative teams.</p><span>Artify Studio · {new Date().getFullYear()}</span></footer>
-      {notice && <div className={`toast ${notice.tone}`} role="status">{notice.tone === 'success' ? <Checkmark /> : <span>!</span>}{notice.message}</div>}
+      {notice && <div className={`toast ${notice.tone}`} role="status">{notice.tone === 'success' ? <Checkmark /> : <span>!</span>}<p>{notice.message}</p><button type="button" aria-label="Dismiss notification" onClick={() => setNotice(null)}><X size={14} /></button></div>}
+      {pendingAction && (
+        <ConfirmDialog
+          title={pendingAction.kind === 'cancel' ? 'Stop this render?' : 'Delete this batch?'}
+          message={pendingAction.kind === 'cancel'
+            ? `Artify will safely stop “${pendingAction.name}”. Completed files remain available and unfinished files can be retried.`
+            : `“${pendingAction.name}” and all of its source and output files will be permanently removed.`}
+          confirmLabel={pendingAction.kind === 'cancel' ? 'Stop render' : 'Delete batch'}
+          destructive={pendingAction.kind === 'delete'}
+          busy={busyIds.has(pendingAction.id)}
+          onConfirm={() => void confirmAction()}
+          onCancel={() => setPendingAction(null)}
+        />
+      )}
     </div>
   );
 }
