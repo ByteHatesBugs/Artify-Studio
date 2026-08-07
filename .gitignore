@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.env.local
+coverage/
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Runtime media is intentionally never versioned.
+storage/uploads/
+storage/outputs/
+storage/archives/
+!storage/.gitkeep
