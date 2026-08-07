@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MOTION_EFFECTS, OUTPUT_FORMATS, RESOLUTIONS } from './types.js';
+import { FIT_MODES, MOTION_EFFECTS, OUTPUT_FORMATS, QUALITY_PROFILES, RESOLUTIONS } from './types.js';
 
 const hexColor = /^#[0-9a-fA-F]{6}$/;
 
@@ -9,6 +9,9 @@ export const renderSettingsSchema = z.object({
   resolution: z.enum(RESOLUTIONS).default('1080p'),
   motion: z.enum(MOTION_EFFECTS).default('zoom-in'),
   format: z.enum(OUTPUT_FORMATS).default('mp4'),
+  fit: z.enum(FIT_MODES).default('contain'),
+  quality: z.enum(QUALITY_PROFILES).default('balanced'),
+  fade: z.preprocess((value) => value === true || value === 'true', z.boolean()).default(true),
   background: z.string().regex(hexColor).default('#09090b'),
 });
 
