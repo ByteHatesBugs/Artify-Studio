@@ -44,6 +44,10 @@ export const createBatchArchive = async (batch: Batch) => {
   return archivePath;
 };
 
+export const removeBatchArchive = (batchId: string) => (
+  rm(path.join(storagePaths.archives, `${batchId}.zip`), { force: true })
+);
+
 export const removeBatchFiles = async (batch: Batch) => {
   const paths = [
     ...batch.jobs.flatMap((job) => [job.inputPath, job.outputPath]),
