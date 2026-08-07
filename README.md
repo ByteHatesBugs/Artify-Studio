@@ -82,6 +82,33 @@ bun run dev
 
 Open `http://localhost:5173`. The Vite development server proxies API requests to `http://localhost:8787`.
 
+## NixOS
+
+The repository includes a `flake.nix` development shell for x86_64 and ARM64 Linux. It supplies compatible versions of Bun, FFmpeg, and Git, and points `FFMPEG_PATH` directly at the Nix store executable.
+
+Enable flakes in your NixOS configuration if they are not already enabled:
+
+```nix
+nix.settings.experimental-features = [ "nix-command" "flakes" ];
+```
+
+Enter the project environment and start development:
+
+```bash
+nix develop
+bun install --frozen-lockfile
+cp .env.example .env
+bun run dev
+```
+
+For a production-like run:
+
+```bash
+nix develop --command bash -lc 'bun install --frozen-lockfile && bun run build && bun start'
+```
+
+Then open `http://localhost:8787`. The first `nix develop` creates `flake.lock` when one is not present; commit that generated lock file from a Nix machine when you want to pin the exact Nixpkgs revision.
+
 ## Development commands
 
 | Command | Purpose |
