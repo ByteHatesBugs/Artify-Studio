@@ -5,6 +5,7 @@ interface SettingsPanelProps {
   settings: RenderSettings;
   imageCount: number;
   isSubmitting: boolean;
+  engineReady: boolean;
   onChange: (settings: RenderSettings) => void;
   onSubmit: () => void;
 }
@@ -16,7 +17,7 @@ const resolutions = [
   { value: 'portrait', label: 'Portrait', detail: '1080 × 1920' },
 ] as const;
 
-export function SettingsPanel({ settings, imageCount, isSubmitting, onChange, onSubmit }: SettingsPanelProps) {
+export function SettingsPanel({ settings, imageCount, isSubmitting, engineReady, onChange, onSubmit }: SettingsPanelProps) {
   const update = <K extends keyof RenderSettings>(key: K, value: RenderSettings[K]) => onChange({ ...settings, [key]: value });
   const estimatedSeconds = Math.ceil(imageCount * settings.duration / 2);
 
@@ -91,11 +92,11 @@ export function SettingsPanel({ settings, imageCount, isSubmitting, onChange, on
         <div><span>Outputs</span><strong>{imageCount || '—'} videos</strong></div>
         <div><span>Est. processing</span><strong>{imageCount ? `~${estimatedSeconds}s` : '—'}</strong></div>
       </div>
-      <button className="primary-button" type="button" onClick={onSubmit} disabled={!imageCount || isSubmitting || !settings.name.trim()}>
+      <button className="primary-button" type="button" onClick={onSubmit} disabled={!imageCount || isSubmitting || !settings.name.trim() || !engineReady}>
         {isSubmitting ? <span className="spinner" /> : <Play size={17} fill="currentColor" />}
-        {isSubmitting ? 'Uploading batch…' : `Render ${imageCount || 0} video${imageCount === 1 ? '' : 's'}`}
+        {isSubmitting ? 'Uploading batch…' : !engineReady ? 'Render engine unavailable' : `Render ${imageCount || 0} video${imageCount === 1 ? '' : 's'}`}
       </button>
-      <p className="privacy-note">Files stay on your processing server and expire automatically.</p>
+      <p className="privacy-note">{engineReady ? 'Files stay on your processing server and expire automatically.' : 'Ask the server administrator to configure FFmpeg.'}</p>
     </aside>
   );
 }
