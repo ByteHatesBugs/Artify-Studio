@@ -38,10 +38,10 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
     const element = previewRef.current;
     if (!element || !previewImage) return;
     const transforms: Record<RenderSettings['motion'], [string, string]> = {
-      'zoom-in': ['scale(1)', 'scale(1.12)'],
-      'zoom-out': ['scale(1.12)', 'scale(1)'],
-      'pan-left': ['scale(1.12) translateX(4%)', 'scale(1.12) translateX(-4%)'],
-      'pan-right': ['scale(1.12) translateX(-4%)', 'scale(1.12) translateX(4%)'],
+      'zoom-in': ['scale(1)', 'scale(1.08)'],
+      'zoom-out': ['scale(1.08)', 'scale(1)'],
+      'pan-left': ['scale(1.08) translateX(3%)', 'scale(1.08) translateX(-3%)'],
+      'pan-right': ['scale(1.08) translateX(-3%)', 'scale(1.08) translateX(3%)'],
       still: ['scale(1)', 'scale(1)'],
     };
     const [from, to] = transforms[settings.motion];
@@ -49,17 +49,17 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
     const endOffset = settings.effectEnd / settings.duration;
     const motionAnimation = element.animate([
       { transform: from, offset: 0 },
-      { transform: from, offset: startOffset },
+      { transform: from, offset: startOffset, easing: 'ease-in-out' },
       { transform: to, offset: endOffset },
       { transform: to, offset: 1 },
-    ], { duration: settings.duration * 1000, iterations: Infinity, easing: 'linear' });
+    ], { duration: settings.duration * 1000, iterations: Infinity, direction: 'alternate', easing: 'linear' });
     const fadeDuration = Math.min(0.5, settings.duration / 4) / settings.duration;
     const fadeAnimation = settings.fade ? element.animate([
       { opacity: 0, offset: 0 },
       { opacity: 1, offset: fadeDuration },
       { opacity: 1, offset: 1 - fadeDuration },
       { opacity: 0, offset: 1 },
-    ], { duration: settings.duration * 1000, iterations: Infinity, easing: 'linear' }) : undefined;
+    ], { duration: settings.duration * 1000, iterations: Infinity, direction: 'alternate', easing: 'linear' }) : undefined;
     return () => {
       motionAnimation.cancel();
       fadeAnimation?.cancel();
