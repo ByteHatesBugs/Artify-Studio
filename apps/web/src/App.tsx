@@ -15,6 +15,9 @@ const initialSettings: RenderSettings = {
   resolution: '1080p',
   motion: 'zoom-in',
   format: 'mp4',
+  fit: 'contain',
+  quality: 'balanced',
+  fade: true,
   background: '#09090b',
 };
 
@@ -234,7 +237,7 @@ export default function App() {
 
         <section className="studio-layout" id="workspace">
           <UploadZone images={images} disabled={isSubmitting} onAdd={addImages} onRemove={removeImage} onMove={moveImage} onClear={clearImages} />
-          <SettingsPanel settings={settings} imageCount={images.length} isSubmitting={isSubmitting} engineReady={health?.engine.ready === true} onChange={setSettings} onReset={() => setSettings({ ...initialSettings, name: settings.name })} onSubmit={submit} />
+          <SettingsPanel settings={settings} previewImage={images[0]?.previewUrl} imageCount={images.length} isSubmitting={isSubmitting} engineReady={health?.engine.ready === true} onChange={setSettings} onReset={() => setSettings({ ...initialSettings, name: settings.name })} onSubmit={submit} />
         </section>
 
         <BatchQueue batches={batches} loading={isHistoryLoading} busyIds={busyIds} onCancel={(id) => requestAction('cancel', id)} onRetry={retry} onDelete={(id) => requestAction('delete', id)} />
