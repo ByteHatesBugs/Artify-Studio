@@ -26,4 +26,5 @@ export const storagePaths = {
   uploads: path.join(config.storageDir, 'uploads'),
   outputs: path.join(config.storageDir, 'outputs'),
   archives: path.join(config.storageDir, 'archives'),
+  state: path.join(config.storageDir, 'state'),
 };
