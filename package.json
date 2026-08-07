@@ -1,0 +1,23 @@
+{
+  "name": "artify-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A production-minded batch image-to-video workspace.",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n API,WEB -c magenta,cyan \"npm run dev -w @artify/api\" \"npm run dev -w @artify/web\"",
+    "build": "npm run build -w @artify/api && npm run build -w @artify/web",
+    "check": "npm run check -w @artify/api && npm run check -w @artify/web",
+    "test": "npm run test -w @artify/api && npm run test -w @artify/web",
+    "start": "npm run start -w @artify/api"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
+}
