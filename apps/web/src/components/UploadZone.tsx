@@ -82,7 +82,7 @@ export function UploadZone({ images, disabled, onAdd, onRemove, onMove, onClear 
                 setDraggingId(null);
               }}
             >
-              <img src={image.previewUrl} alt={`Preview of ${image.file.name}`} />
+              <img src={image.previewUrl} alt={`Preview of ${image.file.name}`} loading="lazy" decoding="async" />
               <span className="asset-index">{String(index + 1).padStart(2, '0')}</span>
               <span className="asset-grip" title="Drag to reorder"><GripVertical size={15} /></span>
               <button type="button" className="asset-remove" aria-label={`Remove ${image.file.name}`} onClick={() => onRemove(image.id)} disabled={disabled}>
