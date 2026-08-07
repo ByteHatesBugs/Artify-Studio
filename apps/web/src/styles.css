@@ -63,6 +63,8 @@ main { max-width: 1320px; margin: 0 auto; padding: 0 28px 100px; }
 .hero-copy { max-width: 720px; }
 .status-pill { width: fit-content; display: flex; align-items: center; gap: 9px; color: #b1b0b4; border: 1px solid var(--line); border-radius: 99px; padding: 7px 12px; text-transform: uppercase; font-size: 10px; letter-spacing: 1.3px; font-weight: 700; }
 .status-pill > span { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 0 4px rgba(200,255,61,.1); }
+.status-pill.engine-off { color: #ffaaa6; border-color: rgba(255,112,107,.25); }
+.status-pill.engine-off > span { background: var(--danger); box-shadow: 0 0 0 4px rgba(255,112,107,.1); }
 .hero h1 { margin: 21px 0 20px; font: 600 clamp(52px, 6vw, 84px)/.96 'Manrope', sans-serif; letter-spacing: -5px; }
 .hero h1 em { color: var(--accent); font-style: normal; }
 .hero-copy > p { max-width: 620px; margin: 0; color: #a9a7ab; font-size: 18px; line-height: 1.65; }
@@ -150,10 +152,11 @@ main { max-width: 1320px; margin: 0 auto; padding: 0 28px 100px; }
 .batch-icon { width: 42px; height: 42px; flex: none; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 11px; color: var(--accent); background: var(--accent-soft); }
 .batch-title h3 { font: 600 14px 'Manrope', sans-serif; margin: 0 0 4px; }
 .batch-title p { color: var(--muted); margin: 0; font-size: 10px; text-transform: uppercase; letter-spacing: .55px; }
-.batch-actions { display: flex; align-items: center; gap: 8px; }
+.batch-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
 .icon-action { height: 35px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; background: transparent; display: flex; align-items: center; gap: 6px; cursor: pointer; color: #aaa8ac; font-size: 10px; font-weight: 600; }
 .icon-action:hover { color: #fff; background: var(--surface-raised); }
 .download-action { color: var(--accent); border-color: rgba(200,255,61,.2); background: var(--accent-soft); }
+.retry-action { color: #d4c3ff; border-color: rgba(156,118,255,.24); background: rgba(156,118,255,.08); }
 .batch-progress-row { display: grid; grid-template-columns: 1fr 40px; gap: 12px; align-items: center; margin: 19px 0 15px; }
 .batch-progress-row strong { text-align: right; font-size: 10px; color: #a6a5a9; }
 .progress-track, .job-mini-progress { overflow: hidden; background: #29292c; border-radius: 99px; }
