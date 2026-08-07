@@ -8,6 +8,9 @@ const settings: RenderSettings = {
   resolution: '1080p',
   motion: 'zoom-in',
   format: 'mp4',
+  fit: 'contain',
+  quality: 'balanced',
+  fade: true,
   background: '#09090b',
 };
 
@@ -17,6 +20,7 @@ describe('media command construction', () => {
     expect(filter).toContain('scale=1920:1080');
     expect(filter).toContain('zoompan');
     expect(filter).toContain('fps=30');
+    expect(filter).toContain('fade=t=in');
   });
 
   it('passes file paths as separate process arguments', () => {
@@ -25,5 +29,13 @@ describe('media command construction', () => {
     expect(args).toContain('input image.jpg');
     expect(args.at(-1)).toBe('output video.mp4');
     expect(args).toContain('libx264');
+    expect(args).toContain('22');
+  });
+
+  it('supports edge-to-edge framing without transitions', () => {
+    const filter = buildVideoFilter({ ...settings, fit: 'cover', fade: false, motion: 'still' });
+    expect(filter).toContain('force_original_aspect_ratio=increase');
+    expect(filter).toContain('crop=1920:1080');
+    expect(filter).not.toContain('fade=');
   });
 });
