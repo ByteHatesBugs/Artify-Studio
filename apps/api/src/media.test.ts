@@ -19,9 +19,10 @@ const settings: RenderSettings = {
 describe('media command construction', () => {
   it('creates a padded 1080p zoom filter', () => {
     const filter = buildVideoFilter(settings);
-    expect(filter).toContain('scale=1920:1080');
+    expect(filter).toContain('scale=3840:2160');
     expect(filter).toContain('zoompan');
     expect(filter).toContain('clip((on-30)/90,0,1)');
+    expect(filter).toContain('3-2*');
     expect(filter).toContain('fps=30');
     expect(filter).toContain('fade=t=in');
   });
@@ -29,7 +30,8 @@ describe('media command construction', () => {
   it('holds motion outside the selected effect window', () => {
     const filter = buildVideoFilter({ ...settings, fps: 24, effectStart: 1.5, effectEnd: 3.5, motion: 'pan-right' });
     expect(filter).toContain('clip((on-36)/48,0,1)');
-    expect(filter).toContain('(iw-iw/zoom)*clip');
+    expect(filter).toContain('(iw-iw/zoom)*(clip');
+    expect(filter).toContain("z='1.08'");
   });
 
   it('passes file paths as separate process arguments', () => {
