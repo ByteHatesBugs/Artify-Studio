@@ -1,6 +1,8 @@
 export type MotionEffect = 'still' | 'zoom-in' | 'zoom-out' | 'pan-left' | 'pan-right';
 export type Resolution = '720p' | '1080p' | 'square' | 'portrait';
 export type OutputFormat = 'mp4' | 'webm';
+export type FitMode = 'contain' | 'cover';
+export type QualityProfile = 'draft' | 'balanced' | 'high';
 export type JobStatus = 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
 export interface RenderSettings {
@@ -10,6 +12,9 @@ export interface RenderSettings {
   resolution: Resolution;
   motion: MotionEffect;
   format: OutputFormat;
+  fit: FitMode;
+  quality: QualityProfile;
+  fade: boolean;
   background: string;
 }
 
