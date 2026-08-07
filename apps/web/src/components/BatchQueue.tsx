@@ -1,9 +1,12 @@
-import { AlertCircle, Check, Download, Film, LoaderCircle, RotateCcw, Square, Trash2, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { AlertCircle, Check, Download, Film, Inbox, LoaderCircle, RotateCcw, Square, Trash2, X } from 'lucide-react';
 import { batchDownloadUrl, jobDownloadUrl } from '../api';
 import type { Batch, JobStatus } from '../types';
 
 interface BatchQueueProps {
   batches: Batch[];
+  loading: boolean;
+  busyIds: Set<string>;
   onCancel: (id: string) => void;
   onRetry: (id: string) => void;
   onDelete: (id: string) => void;
@@ -24,8 +27,22 @@ const StatusIcon = ({ status }: { status: JobStatus }) => {
   return <LoaderCircle size={14} className={status === 'processing' ? 'spin' : ''} />;
 };
 
-export function BatchQueue({ batches, onCancel, onRetry, onDelete }: BatchQueueProps) {
-  if (!batches.length) return null;
+type QueueFilter = 'all' | 'active' | 'ready' | 'attention';
+
+export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onDelete }: BatchQueueProps) {
+  const [filter, setFilter] = useState<QueueFilter>('all');
+  const visibleBatches = useMemo(() => batches.filter((batch) => {
+    if (filter === 'active') return batch.status === 'queued' || batch.status === 'processing';
+    if (filter === 'ready') return batch.status === 'completed';
+    if (filter === 'attention') return batch.status === 'failed' || batch.status === 'cancelled';
+    return true;
+  }), [batches, filter]);
+  const filters: Array<{ value: QueueFilter; label: string }> = [
+    { value: 'all', label: `All ${batches.length}` },
+    { value: 'active', label: 'Active' },
+    { value: 'ready', label: 'Ready' },
+    { value: 'attention', label: 'Attention' },
+  ];
 
   return (
     <section className="queue-section" aria-labelledby="queue-heading">
@@ -34,12 +51,24 @@ export function BatchQueue({ batches, onCancel, onRetry, onDelete }: BatchQueueP
           <span className="eyebrow">Render activity</span>
           <h2 id="queue-heading">Your output queue</h2>
         </div>
-        <span className="queue-count">{batches.length} {batches.length === 1 ? 'batch' : 'batches'}</span>
+        <div className="queue-filters" aria-label="Filter renders">
+          {filters.map((option) => <button type="button" key={option.value} className={filter === option.value ? 'selected' : ''} onClick={() => setFilter(option.value)}>{option.label}</button>)}
+        </div>
       </div>
 
       <div className="batch-list">
-        {batches.map((batch) => {
+        {loading && batches.length === 0 && <div className="queue-skeleton" aria-label="Loading render history"><span /><span /><span /></div>}
+        {!loading && visibleBatches.length === 0 && (
+          <div className="queue-empty">
+            <span><Inbox size={24} /></span>
+            <h3>{batches.length ? 'No renders in this view' : 'Your render queue is ready'}</h3>
+            <p>{batches.length ? 'Choose another filter to see your batches.' : 'Add images and start a render. Progress and downloads will appear here.'}</p>
+            {!batches.length && <a href="#workspace">Create your first batch</a>}
+          </div>
+        )}
+        {visibleBatches.map((batch) => {
           const active = batch.status === 'processing' || batch.status === 'queued';
+          const busy = busyIds.has(batch.id);
           const completedCount = batch.jobs.filter((job) => job.status === 'completed').length;
           const retryableCount = batch.jobs.filter((job) => job.status === 'failed' || job.status === 'cancelled').length;
           return (
@@ -51,11 +80,11 @@ export function BatchQueue({ batches, onCancel, onRetry, onDelete }: BatchQueueP
                 </div>
                 <div className="batch-actions">
                   {!active && completedCount > 0 && <a className="icon-action download-action" href={batchDownloadUrl(batch.id)} aria-label={`Download ${batch.name}`}><Download size={16} /><span>Download all</span></a>}
-                  {!active && retryableCount > 0 && <button className="icon-action retry-action" type="button" onClick={() => onRetry(batch.id)}><RotateCcw size={14} /><span>Retry {retryableCount}</span></button>}
+                  {!active && retryableCount > 0 && <button className="icon-action retry-action" type="button" onClick={() => onRetry(batch.id)} disabled={busy}><RotateCcw size={14} /><span>Retry {retryableCount}</span></button>}
                   {active ? (
-                    <button className="icon-action" type="button" onClick={() => onCancel(batch.id)}><Square size={13} fill="currentColor" /> Stop</button>
+                    <button className="icon-action" type="button" onClick={() => onCancel(batch.id)} disabled={busy}><Square size={13} fill="currentColor" /> Stop</button>
                   ) : (
-                    <button className="icon-button" type="button" aria-label={`Delete ${batch.name}`} onClick={() => onDelete(batch.id)}><Trash2 size={16} /></button>
+                    <button className="icon-button" type="button" aria-label={`Delete ${batch.name}`} onClick={() => onDelete(batch.id)} disabled={busy}><Trash2 size={16} /></button>
                   )}
                 </div>
               </div>
