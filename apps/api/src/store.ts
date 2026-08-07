@@ -26,11 +26,15 @@ export class BatchStore {
       batch.settings.fit ??= 'contain';
       batch.settings.quality ??= 'balanced';
       batch.settings.fade ??= true;
+      batch.settings.effectStart ??= 0;
+      batch.settings.effectEnd ??= batch.settings.duration;
       const jobs: RenderJob[] = [];
       for (const job of batch.jobs) {
         job.settings.fit ??= batch.settings.fit;
         job.settings.quality ??= batch.settings.quality;
         job.settings.fade ??= batch.settings.fade;
+        job.settings.effectStart ??= batch.settings.effectStart;
+        job.settings.effectEnd ??= batch.settings.effectEnd;
         job.attempts ??= job.startedAt ? 1 : 0;
         if (job.status === 'completed') {
           const outputExists = await access(job.outputPath).then(() => true).catch(() => false);
