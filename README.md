@@ -8,7 +8,10 @@ The interface is designed for repeatable creative work: previews before upload, 
 
 - Batch upload for up to 50 images with client- and server-side validation
 - Duplicate detection plus drag, keyboard, and button-based source reordering
-- Five motion profiles: still, zoom in, zoom out, pan left, and pan right
+- Five motion profiles with a live first-image preview: still, zoom in, zoom out, pan left, and pan right
+- Contain and cover framing modes with configurable canvas background color
+- Draft, balanced, and high encoding profiles that change FFmpeg speed and output quality
+- Optional fade-in and fade-out transitions for polished clips
 - Persistent preferences and quick profiles for common campaign, social, and lightweight outputs
 - Landscape, square, and portrait canvases up to Full HD
 - MP4/H.264 and WebM/VP9 output
@@ -30,7 +33,7 @@ Artify-Studio/
 │   │       ├── routes.ts Upload, queue, cancel, and download endpoints
 │   │       ├── queue.ts  Concurrency-controlled render queue
 │   │       ├── media.ts  Safe FFmpeg command construction
-│   │       └── store.ts  In-process batch state
+│   │       └── store.ts  Durable JSON-backed batch state
 │   └── web/              React + Vite studio interface
 │       └── src/
 │           ├── components/
