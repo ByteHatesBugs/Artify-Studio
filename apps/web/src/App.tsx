@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CircleHelp, Github, ShieldCheck, WandSparkles, Zap } from 'lucide-react';
-import { cancelBatch, createBatch, deleteBatch, listBatches } from './api';
+import { cancelBatch, createBatch, deleteBatch, getHealth, listBatches, retryBatch } from './api';
 import { BatchQueue } from './components/BatchQueue';
 import { Logo } from './components/Logo';
 import { SettingsPanel } from './components/SettingsPanel';
 import { UploadZone } from './components/UploadZone';
-import type { Batch, RenderSettings, SelectedImage } from './types';
+import type { Batch, HealthStatus, RenderSettings, SelectedImage } from './types';
 
 const initialSettings: RenderSettings = {
   name: 'Campaign motion set',
@@ -21,6 +21,7 @@ export default function App() {
   const [images, setImages] = useState<SelectedImage[]>([]);
   const [settings, setSettings] = useState(initialSettings);
   const [batches, setBatches] = useState<Batch[]>([]);
+  const [health, setHealth] = useState<HealthStatus | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notice, setNotice] = useState<{ tone: 'error' | 'success'; message: string } | null>(null);
   const imagesRef = useRef(images);
@@ -37,6 +38,12 @@ export default function App() {
 
   useEffect(() => {
     void refresh();
+    void getHealth().then(setHealth).catch(() => setHealth({
+      status: 'degraded',
+      service: 'artify-api',
+      engine: { ready: false, error: 'The processing server is unreachable.', checkedAt: new Date().toISOString() },
+      timestamp: new Date().toISOString(),
+    }));
   }, [refresh]);
 
   useEffect(() => {
@@ -108,6 +115,16 @@ export default function App() {
     }
   };
 
+  const retry = async (id: string) => {
+    try {
+      const { batch, retried } = await retryBatch(id);
+      setBatches((current) => current.map((candidate) => candidate.id === id ? batch : candidate));
+      showNotice('success', `${retried} render${retried === 1 ? '' : 's'} returned to the queue.`);
+    } catch (error) {
+      showNotice('error', error instanceof Error ? error.message : 'The batch could not be retried.');
+    }
+  };
+
   return (
     <div className="app-shell" id="top">
       <header className="topbar">
@@ -125,7 +142,9 @@ export default function App() {
       <main>
         <section className="hero">
           <div className="hero-copy">
-            <span className="status-pill"><span /> FFmpeg engine ready</span>
+            <span className={`status-pill ${health && !health.engine.ready ? 'engine-off' : ''}`} title={health?.engine.version || health?.engine.error}>
+              <span /> {health ? health.engine.ready ? 'FFmpeg engine ready' : 'Render engine unavailable' : 'Checking render engine'}
+            </span>
             <h1>Still images.<br /><em>Built to move.</em></h1>
             <p>Turn an entire image set into polished, consistent video assets—without repetitive timelines or exports.</p>
           </div>
@@ -138,10 +157,10 @@ export default function App() {
 
         <section className="studio-layout" id="workspace">
           <UploadZone images={images} disabled={isSubmitting} onAdd={addImages} onRemove={removeImage} onClear={clearImages} />
-          <SettingsPanel settings={settings} imageCount={images.length} isSubmitting={isSubmitting} onChange={setSettings} onSubmit={submit} />
+          <SettingsPanel settings={settings} imageCount={images.length} isSubmitting={isSubmitting} engineReady={health?.engine.ready === true} onChange={setSettings} onSubmit={submit} />
         </section>
 
-        <BatchQueue batches={batches} onCancel={stop} onDelete={removeBatch} />
+        <BatchQueue batches={batches} onCancel={stop} onRetry={retry} onDelete={removeBatch} />
       </main>
 
       <footer><Logo /><p>Batch motion production for focused creative teams.</p><span>Artify Studio · {new Date().getFullYear()}</span></footer>
