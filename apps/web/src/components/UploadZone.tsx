@@ -1,5 +1,5 @@
 import { useRef, useState, type ChangeEvent, type DragEvent, type KeyboardEvent } from 'react';
-import { ImagePlus, Plus, Trash2, UploadCloud } from 'lucide-react';
+import { ArrowLeft, ArrowRight, GripVertical, ImagePlus, Plus, Trash2, UploadCloud } from 'lucide-react';
 import type { SelectedImage } from '../types';
 
 interface UploadZoneProps {
@@ -7,12 +7,14 @@ interface UploadZoneProps {
   disabled?: boolean;
   onAdd: (files: File[]) => void;
   onRemove: (id: string) => void;
+  onMove: (id: string, targetIndex: number) => void;
   onClear: () => void;
 }
 
-export function UploadZone({ images, disabled, onAdd, onRemove, onClear }: UploadZoneProps) {
+export function UploadZone({ images, disabled, onAdd, onRemove, onMove, onClear }: UploadZoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
 
   const choose = () => !disabled && inputRef.current?.click();
   const handleInput = (event: ChangeEvent<HTMLInputElement>) => {
@@ -67,15 +69,32 @@ export function UploadZone({ images, disabled, onAdd, onRemove, onClear }: Uploa
       ) : (
         <div className="asset-grid">
           {images.map((image, index) => (
-            <article className="asset-card" key={image.id}>
-              <img src={image.previewUrl} alt="" />
+            <article
+              className={`asset-card ${draggingId === image.id ? 'is-sorting' : ''}`}
+              key={image.id}
+              draggable={!disabled}
+              onDragStart={() => setDraggingId(image.id)}
+              onDragEnd={() => setDraggingId(null)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault();
+                if (draggingId && draggingId !== image.id) onMove(draggingId, index);
+                setDraggingId(null);
+              }}
+            >
+              <img src={image.previewUrl} alt={`Preview of ${image.file.name}`} />
               <span className="asset-index">{String(index + 1).padStart(2, '0')}</span>
+              <span className="asset-grip" title="Drag to reorder"><GripVertical size={15} /></span>
               <button type="button" className="asset-remove" aria-label={`Remove ${image.file.name}`} onClick={() => onRemove(image.id)} disabled={disabled}>
                 <Trash2 size={15} />
               </button>
               <div className="asset-meta">
                 <strong title={image.file.name}>{image.file.name}</strong>
                 <span>{(image.file.size / 1024 / 1024).toFixed(1)} MB</span>
+              </div>
+              <div className="asset-order-actions">
+                <button type="button" aria-label={`Move ${image.file.name} earlier`} onClick={() => onMove(image.id, index - 1)} disabled={disabled || index === 0}><ArrowLeft size={13} /></button>
+                <button type="button" aria-label={`Move ${image.file.name} later`} onClick={() => onMove(image.id, index + 1)} disabled={disabled || index === images.length - 1}><ArrowRight size={13} /></button>
               </div>
             </article>
           ))}
