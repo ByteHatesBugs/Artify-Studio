@@ -7,13 +7,16 @@ The interface is designed for repeatable creative work: previews before upload, 
 ## Features
 
 - Batch upload for up to 50 images with client- and server-side validation
+- Duplicate detection plus drag, keyboard, and button-based source reordering
 - Five motion profiles: still, zoom in, zoom out, pan left, and pan right
+- Persistent preferences and quick profiles for common campaign, social, and lightweight outputs
 - Landscape, square, and portrait canvases up to Full HD
 - MP4/H.264 and WebM/VP9 output
 - Queue concurrency controls to protect the processing server under load
 - Live batch and per-video render progress
 - Durable batch history with automatic recovery after server restarts
 - Safe cancellation, failed-job retries, individual downloads, and batch ZIP archives
+- Filterable render history with loading, empty, busy, confirmation, and notification states
 - Responsive, keyboard-accessible interface
 - Automatic input cleanup and configurable output retention
 
