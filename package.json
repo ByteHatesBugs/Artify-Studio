@@ -3,19 +3,20 @@
   "version": "1.0.0",
   "private": true,
   "description": "A production-minded batch image-to-video workspace.",
+  "packageManager": "bun@1.3.14",
   "workspaces": [
     "apps/*"
   ],
   "scripts": {
-    "dev": "concurrently -n API,WEB -c magenta,cyan \"npm run dev -w @artify/api\" \"npm run dev -w @artify/web\"",
-    "build": "npm run build -w @artify/api && npm run build -w @artify/web",
-    "check": "npm run check -w @artify/api && npm run check -w @artify/web",
-    "test": "npm run test -w @artify/api && npm run test -w @artify/web",
-    "start": "npm run start -w @artify/api"
+    "dev": "bun run --filter '*' dev",
+    "build": "bun --filter @artify/api build && bun --filter @artify/web build",
+    "check": "bun --filter @artify/api check && bun --filter @artify/web check",
+    "test": "bun --filter @artify/api test && bun --filter @artify/web test",
+    "start": "bun --filter @artify/api start"
   },
   "engines": {
-    "node": ">=20.0.0",
-    "npm": ">=10.0.0"
+    "bun": ">=1.3.0",
+    "node": ">=20.0.0"
   },
   "devDependencies": {
     "concurrently": "^9.2.0"
