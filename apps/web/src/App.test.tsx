@@ -3,6 +3,11 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import App from './App';
 
+Object.defineProperty(window, 'localStorage', {
+  configurable: true,
+  value: { getItem: vi.fn(() => null), setItem: vi.fn(), removeItem: vi.fn(), clear: vi.fn() },
+});
+
 vi.stubGlobal('fetch', vi.fn().mockImplementation(async (input: RequestInfo | URL) => ({
   ok: true,
   json: async () => String(input).includes('/api/health')
@@ -16,5 +21,6 @@ describe('Artify Studio', () => {
     expect(screen.getByRole('heading', { name: /still images/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /upload images/i })).toBeTruthy();
     expect(await screen.findByRole('button', { name: /render 0 videos/i })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('heading', { name: /your render queue is ready/i })).toBeTruthy();
   });
 });
