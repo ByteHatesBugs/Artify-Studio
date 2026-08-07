@@ -24,6 +24,7 @@ export interface RenderJob {
   outputName: string;
   status: JobStatus;
   progress: number;
+  attempts: number;
   settings: RenderSettings;
   error?: string;
   createdAt: string;
