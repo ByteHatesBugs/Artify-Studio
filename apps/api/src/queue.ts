@@ -12,9 +12,14 @@ interface QueueItem {
 class RenderQueue {
   private readonly waiting: QueueItem[] = [];
   private readonly running = new Map<string, ReturnType<typeof renderImage>['process']>();
+  private stopping = false;
 
   enqueue(batchId: string, jobs: RenderJob[]) {
-    this.waiting.push(...jobs.map((job) => ({ batchId, job })));
+    const unscheduled = jobs.filter((job) => {
+      const key = `${batchId}:${job.id}`;
+      return !this.running.has(key) && !this.waiting.some((item) => `${item.batchId}:${item.job.id}` === key);
+    });
+    this.waiting.push(...unscheduled.map((job) => ({ batchId, job })));
     this.drain();
   }
 
@@ -25,7 +30,14 @@ class RenderQueue {
     }
   }
 
+  stop() {
+    this.stopping = true;
+    this.waiting.length = 0;
+    for (const process of this.running.values()) process.kill('SIGTERM');
+  }
+
   private drain() {
+    if (this.stopping) return;
     while (this.running.size < config.queueConcurrency && this.waiting.length > 0) {
       const item = this.waiting.shift();
       if (!item || item.job.status === 'cancelled') continue;
@@ -35,7 +47,14 @@ class RenderQueue {
 
   private async process({ batchId, job }: QueueItem) {
     const key = `${batchId}:${job.id}`;
-    batchStore.updateJob(batchId, job.id, { status: 'processing', progress: 1, startedAt: new Date().toISOString() });
+    batchStore.updateJob(batchId, job.id, {
+      status: 'processing',
+      progress: 1,
+      attempts: job.attempts + 1,
+      error: undefined,
+      startedAt: new Date().toISOString(),
+      completedAt: undefined,
+    });
     const handle = renderImage(job, (progress) => batchStore.updateJob(batchId, job.id, { progress }));
     this.running.set(key, handle.process);
 
@@ -43,6 +62,7 @@ class RenderQueue {
       await handle.completion;
       batchStore.updateJob(batchId, job.id, { status: 'completed', progress: 100, completedAt: new Date().toISOString() });
     } catch (error) {
+      if (this.stopping) return;
       const latest = batchStore.get(batchId)?.jobs.find((candidate) => candidate.id === job.id);
       const cancelled = latest?.status === 'cancelled';
       batchStore.updateJob(batchId, job.id, {
@@ -54,7 +74,6 @@ class RenderQueue {
       await unlink(job.outputPath).catch(() => undefined);
     } finally {
       this.running.delete(key);
-      await unlink(job.inputPath).catch(() => undefined);
       this.drain();
     }
   }
