@@ -38,8 +38,7 @@ Artify-Studio/
 
 ## Requirements
 
-- Node.js 20 or newer
-- npm 10 or newer
+- Bun 1.3 or newer
 - [FFmpeg](https://ffmpeg.org/download.html) available on your `PATH`
 
 Verify FFmpeg before installing:
@@ -54,7 +53,7 @@ ffmpeg -version
 git clone https://github.com/ByteHatesBugs/Artify-Studio.git
 cd Artify-Studio
 git switch dev
-npm install
+bun install
 ```
 
 Copy the environment template:
@@ -68,7 +67,7 @@ On Windows PowerShell, use `Copy-Item .env.example .env` instead.
 Start both the web interface and processing API:
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 Open `http://localhost:5173`. The Vite development server proxies API requests to `http://localhost:8787`.
@@ -77,17 +76,17 @@ Open `http://localhost:5173`. The Vite development server proxies API requests t
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | Start the API and web app with live reload |
-| `npm run check` | Type-check both workspaces |
-| `npm test` | Run the automated test suites |
-| `npm run build` | Create production API and web builds |
-| `npm start` | Serve the built web app and API on one port |
+| `bun run dev` | Start the API and web app with live reload |
+| `bun run check` | Type-check both workspaces |
+| `bun run test` | Run the automated test suites |
+| `bun run build` | Create production API and web builds |
+| `bun start` | Serve the built web app and API on one port |
 
 For a production-like local run:
 
 ```bash
-npm run build
-npm start
+bun run build
+bun start
 ```
 
 Then open `http://localhost:8787`.
