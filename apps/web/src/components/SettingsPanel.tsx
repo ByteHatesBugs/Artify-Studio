@@ -1,4 +1,4 @@
-import { Clapperboard, Clock3, Gauge, MonitorUp, Play, Sparkles } from 'lucide-react';
+import { Clapperboard, Clock3, Gauge, MonitorUp, Play, RotateCcw, Sparkles } from 'lucide-react';
 import type { RenderSettings } from '../types';
 
 interface SettingsPanelProps {
@@ -7,6 +7,7 @@ interface SettingsPanelProps {
   isSubmitting: boolean;
   engineReady: boolean;
   onChange: (settings: RenderSettings) => void;
+  onReset: () => void;
   onSubmit: () => void;
 }
 
@@ -17,7 +18,13 @@ const resolutions = [
   { value: 'portrait', label: 'Portrait', detail: '1080 × 1920' },
 ] as const;
 
-export function SettingsPanel({ settings, imageCount, isSubmitting, engineReady, onChange, onSubmit }: SettingsPanelProps) {
+const profiles: Array<{ label: string; detail: string; settings: Partial<RenderSettings> }> = [
+  { label: 'Campaign', detail: 'Full HD · MP4', settings: { resolution: '1080p', format: 'mp4', motion: 'zoom-in', duration: 5, fps: 30 } },
+  { label: 'Social', detail: 'Portrait · MP4', settings: { resolution: 'portrait', format: 'mp4', motion: 'zoom-in', duration: 5, fps: 30 } },
+  { label: 'Lightweight', detail: 'HD · WebM', settings: { resolution: '720p', format: 'webm', motion: 'still', duration: 3, fps: 24 } },
+];
+
+export function SettingsPanel({ settings, imageCount, isSubmitting, engineReady, onChange, onReset, onSubmit }: SettingsPanelProps) {
   const update = <K extends keyof RenderSettings>(key: K, value: RenderSettings[K]) => onChange({ ...settings, [key]: value });
   const estimatedSeconds = Math.ceil(imageCount * settings.duration / 2);
 
@@ -28,7 +35,16 @@ export function SettingsPanel({ settings, imageCount, isSubmitting, engineReady,
           <span className="eyebrow">02 · Render profile</span>
           <h2 id="settings-heading">Motion settings</h2>
         </div>
-        <span className="profile-chip"><Sparkles size={13} /> Custom</span>
+        <button className="profile-reset" type="button" onClick={onReset} title="Reset render settings"><RotateCcw size={13} /> Reset</button>
+      </div>
+
+      <span className="field-label first-label"><Sparkles size={15} /> Quick profiles</span>
+      <div className="profile-grid">
+        {profiles.map((profile) => (
+          <button type="button" key={profile.label} onClick={() => onChange({ ...settings, ...profile.settings })}>
+            <strong>{profile.label}</strong><span>{profile.detail}</span>
+          </button>
+        ))}
       </div>
 
       <label className="field-label" htmlFor="batch-name">Batch name</label>
