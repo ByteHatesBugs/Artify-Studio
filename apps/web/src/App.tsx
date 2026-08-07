@@ -11,6 +11,8 @@ import type { Batch, HealthStatus, RenderSettings, SelectedImage } from './types
 const initialSettings: RenderSettings = {
   name: 'Campaign motion set',
   duration: 5,
+  effectStart: 0,
+  effectEnd: 5,
   fps: 30,
   resolution: '1080p',
   motion: 'zoom-in',
@@ -24,7 +26,12 @@ const initialSettings: RenderSettings = {
 const loadSettings = (): RenderSettings => {
   try {
     const saved = JSON.parse(localStorage.getItem('artify:render-settings') ?? '{}') as Partial<RenderSettings>;
-    return { ...initialSettings, ...saved };
+    const merged = { ...initialSettings, ...saved };
+    return {
+      ...merged,
+      effectStart: Math.max(0, Math.min(merged.effectStart, merged.duration - 0.1)),
+      effectEnd: Math.max(0.1, Math.min(merged.effectEnd, merged.duration)),
+    };
   } catch {
     return initialSettings;
   }
