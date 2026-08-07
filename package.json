@@ -2,6 +2,7 @@
   "name": "artify-studio",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "description": "A production-minded batch image-to-video workspace.",
   "packageManager": "bun@1.3.14",
   "workspaces": [
