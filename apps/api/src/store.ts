@@ -23,8 +23,14 @@ export class BatchStore {
 
     const recoverable: Array<{ batchId: string; jobs: RenderJob[] }> = [];
     for (const batch of this.batches.values()) {
+      batch.settings.fit ??= 'contain';
+      batch.settings.quality ??= 'balanced';
+      batch.settings.fade ??= true;
       const jobs: RenderJob[] = [];
       for (const job of batch.jobs) {
+        job.settings.fit ??= batch.settings.fit;
+        job.settings.quality ??= batch.settings.quality;
+        job.settings.fade ??= batch.settings.fade;
         job.attempts ??= job.startedAt ? 1 : 0;
         if (job.status === 'completed') {
           const outputExists = await access(job.outputPath).then(() => true).catch(() => false);
