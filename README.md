@@ -12,7 +12,8 @@ The interface is designed for repeatable creative work: previews before upload, 
 - MP4/H.264 and WebM/VP9 output
 - Queue concurrency controls to protect the processing server under load
 - Live batch and per-video render progress
-- Safe cancellation, individual downloads, and batch ZIP archives
+- Durable batch history with automatic recovery after server restarts
+- Safe cancellation, failed-job retries, individual downloads, and batch ZIP archives
 - Responsive, keyboard-accessible interface
 - Automatic input cleanup and configurable output retention
 
@@ -112,6 +113,7 @@ Keep `QUEUE_CONCURRENCY` conservative. Full HD video encoding is CPU- and memory
 - `GET /api/batches` — current server-local batch history
 - `POST /api/batches` — create a multipart render batch
 - `POST /api/batches/:batchId/cancel` — cancel queued and active work
+- `POST /api/batches/:batchId/retry` — retry failed or cancelled jobs with retained sources
 - `GET /api/batches/:batchId/download` — download completed videos as a ZIP
 - `GET /api/batches/:batchId/jobs/:jobId/download` — download one video
 - `DELETE /api/batches/:batchId` — remove a terminal batch and its files
@@ -122,9 +124,11 @@ Keep `QUEUE_CONCURRENCY` conservative. Full HD video encoding is CPU- and memory
 - `dev` contains active development and is protected by the CI workflow.
 - Create focused feature branches from `dev`, open pull requests back into `dev`, and promote tested releases to `main`.
 
-## Current persistence model
+## Persistence and recovery
 
-Media files are stored on disk while job metadata lives in the API process. Restarting the API clears the visible queue, although output files remain until the configured or external cleanup process removes them. For multi-instance or restart-safe production deployment, replace the in-memory store with PostgreSQL or Redis and move media to object storage such as S3/R2. The queue and route boundaries are separated to make that upgrade straightforward.
+Media files and an atomic JSON batch journal are stored under `storage/`. Completed history survives restarts, interrupted jobs are returned to the queue when their source images remain available, and failed or cancelled jobs can be retried from the interface until the retention window expires. Input images, outputs, archives, and history are removed together by the cleanup process.
+
+The built-in journal is appropriate for one Artify API instance. For a multi-instance deployment, replace it with PostgreSQL or Redis and move media to object storage such as S3/R2. The store, queue, and route boundaries are separated to make that upgrade straightforward.
 
 ## Security and operations
 
