@@ -1,4 +1,4 @@
-import type { Batch, RenderSettings } from './types';
+import type { Batch, HealthStatus, RenderSettings } from './types';
 
 const readJson = async <T>(response: Response): Promise<T> => {
   const payload = await response.json().catch(() => ({}));
@@ -19,6 +19,11 @@ export const listBatches = async () => {
   return readJson<{ batches: Batch[] }>(response);
 };
 
+export const getHealth = async () => {
+  const response = await fetch('/api/health');
+  return readJson<HealthStatus>(response);
+};
+
 export const getBatch = async (id: string) => {
   const response = await fetch(`/api/batches/${id}`);
   return readJson<{ batch: Batch }>(response);
@@ -27,6 +32,11 @@ export const getBatch = async (id: string) => {
 export const cancelBatch = async (id: string) => {
   const response = await fetch(`/api/batches/${id}/cancel`, { method: 'POST' });
   return readJson<{ batch: Batch }>(response);
+};
+
+export const retryBatch = async (id: string) => {
+  const response = await fetch(`/api/batches/${id}/retry`, { method: 'POST' });
+  return readJson<{ batch: Batch; retried: number }>(response);
 };
 
 export const deleteBatch = async (id: string) => {
