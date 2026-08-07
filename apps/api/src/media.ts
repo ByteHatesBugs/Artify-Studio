@@ -18,6 +18,9 @@ const qualityProfiles = {
 export const buildVideoFilter = (settings: RenderSettings) => {
   const [width, height] = dimensions[settings.resolution];
   const frames = Math.ceil(settings.duration * settings.fps);
+  const effectStartFrame = Math.round(settings.effectStart * settings.fps);
+  const effectFrames = Math.max(1, Math.round((settings.effectEnd - settings.effectStart) * settings.fps));
+  const effectProgress = `clip((on-${effectStartFrame})/${effectFrames},0,1)`;
   const base = settings.fit === 'cover'
     ? `scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height}`
     : `scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:${settings.background}`;
@@ -29,9 +32,13 @@ export const buildVideoFilter = (settings: RenderSettings) => {
   if (settings.motion === 'still') return `${base}${fades},format=yuv420p`;
 
   const zoom = settings.motion === 'zoom-out'
-    ? `1.12-on/${Math.max(frames - 1, 1)}*0.12`
-    : `1+on/${Math.max(frames - 1, 1)}*0.12`;
-  const x = settings.motion === 'pan-left' ? `(iw-iw/zoom)*(1-on/${frames})` : settings.motion === 'pan-right' ? `(iw-iw/zoom)*on/${frames}` : 'iw/2-(iw/zoom/2)';
+    ? `1.12-${effectProgress}*0.12`
+    : `1+${effectProgress}*0.12`;
+  const x = settings.motion === 'pan-left'
+    ? `(iw-iw/zoom)*(1-${effectProgress})`
+    : settings.motion === 'pan-right'
+      ? `(iw-iw/zoom)*${effectProgress}`
+      : 'iw/2-(iw/zoom/2)';
   const y = 'ih/2-(ih/zoom/2)';
 
   return `${base},zoompan=z='${zoom}':x='${x}':y='${y}':d=${frames}:s=${width}x${height}:fps=${settings.fps}${fades},format=yuv420p`;
