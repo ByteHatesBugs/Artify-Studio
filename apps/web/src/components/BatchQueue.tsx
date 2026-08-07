@@ -1,10 +1,11 @@
-import { AlertCircle, Check, Download, Film, LoaderCircle, Square, Trash2, X } from 'lucide-react';
+import { AlertCircle, Check, Download, Film, LoaderCircle, RotateCcw, Square, Trash2, X } from 'lucide-react';
 import { batchDownloadUrl, jobDownloadUrl } from '../api';
 import type { Batch, JobStatus } from '../types';
 
 interface BatchQueueProps {
   batches: Batch[];
   onCancel: (id: string) => void;
+  onRetry: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
@@ -23,7 +24,7 @@ const StatusIcon = ({ status }: { status: JobStatus }) => {
   return <LoaderCircle size={14} className={status === 'processing' ? 'spin' : ''} />;
 };
 
-export function BatchQueue({ batches, onCancel, onDelete }: BatchQueueProps) {
+export function BatchQueue({ batches, onCancel, onRetry, onDelete }: BatchQueueProps) {
   if (!batches.length) return null;
 
   return (
@@ -40,6 +41,7 @@ export function BatchQueue({ batches, onCancel, onDelete }: BatchQueueProps) {
         {batches.map((batch) => {
           const active = batch.status === 'processing' || batch.status === 'queued';
           const completedCount = batch.jobs.filter((job) => job.status === 'completed').length;
+          const retryableCount = batch.jobs.filter((job) => job.status === 'failed' || job.status === 'cancelled').length;
           return (
             <article className="batch-card" key={batch.id}>
               <div className="batch-topline">
@@ -49,6 +51,7 @@ export function BatchQueue({ batches, onCancel, onDelete }: BatchQueueProps) {
                 </div>
                 <div className="batch-actions">
                   {!active && completedCount > 0 && <a className="icon-action download-action" href={batchDownloadUrl(batch.id)} aria-label={`Download ${batch.name}`}><Download size={16} /><span>Download all</span></a>}
+                  {!active && retryableCount > 0 && <button className="icon-action retry-action" type="button" onClick={() => onRetry(batch.id)}><RotateCcw size={14} /><span>Retry {retryableCount}</span></button>}
                   {active ? (
                     <button className="icon-action" type="button" onClick={() => onCancel(batch.id)}><Square size={13} fill="currentColor" /> Stop</button>
                   ) : (
@@ -64,7 +67,7 @@ export function BatchQueue({ batches, onCancel, onDelete }: BatchQueueProps) {
                 {batch.jobs.map((job) => (
                   <div className="job-row" key={job.id}>
                     <div className={`job-status ${job.status}`}><StatusIcon status={job.status} /></div>
-                    <div className="job-name"><strong>{job.originalName}</strong><span>{job.error || statusLabel[job.status]}</span></div>
+                    <div className="job-name"><strong>{job.originalName}</strong><span title={job.error}>{job.error || `${statusLabel[job.status]} · Attempt ${job.attempts || 0}`}</span></div>
                     <div className="job-mini-progress"><span style={{ width: `${job.progress}%` }} /></div>
                     {job.status === 'completed' ? (
                       <a className="icon-button" href={jobDownloadUrl(batch.id, job.id)} aria-label={`Download ${job.outputName}`}><Download size={15} /></a>
