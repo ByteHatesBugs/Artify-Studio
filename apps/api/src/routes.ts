@@ -74,12 +74,13 @@ apiRouter.post('/batches', upload.fields([{ name: 'images', maxCount: config.max
       const uniqueStem = sequence === 1 ? stem : `${stem}-${sequence}`;
       const id = randomUUID();
       const override = jobOverrides[index] ?? {};
-      const hasLegacyOverride = override.motion || override.focus || override.strength !== undefined || override.easing || override.effectStart !== undefined || override.effectEnd !== undefined;
+      const hasLegacyOverride = override.motion || override.focus || override.strength !== undefined || override.easing || override.speed !== undefined || override.effectStart !== undefined || override.effectEnd !== undefined;
       const effects = override.effects ?? (hasLegacyOverride ? [{
         motion: override.motion ?? settings.motion,
         focus: override.focus ?? settings.focus,
         strength: override.strength ?? 50,
         easing: override.easing ?? 'cinematic',
+        speed: override.speed ?? 1,
         effectStart: override.effectStart ?? settings.effectStart,
         effectEnd: override.effectEnd ?? settings.effectEnd,
       }] : settings.effects);
