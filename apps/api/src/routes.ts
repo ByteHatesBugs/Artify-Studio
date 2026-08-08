@@ -13,15 +13,17 @@ import { batchStore } from './store.js';
 import type { Batch, RenderJob } from './types.js';
 
 const imageMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const audioMimeTypes = new Set(['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/aac', 'audio/ogg']);
 const upload = multer({
   storage: multer.diskStorage({
     destination: storagePaths.uploads,
     filename: (_request, file, callback) => callback(null, `${randomUUID()}${path.extname(file.originalname).toLowerCase()}`),
   }),
-  limits: { fileSize: config.maxFileSizeBytes, files: config.maxBatchSize },
+  limits: { fileSize: config.maxFileSizeBytes, files: config.maxBatchSize + 1 },
   fileFilter: (_request, file, callback) => {
-    if (imageMimeTypes.has(file.mimetype)) callback(null, true);
-    else callback(new Error('Only JPG, PNG, and WebP images are supported.'));
+    if (file.fieldname === 'images' && imageMimeTypes.has(file.mimetype)) callback(null, true);
+    else if (file.fieldname === 'audio' && audioMimeTypes.has(file.mimetype)) callback(null, true);
+    else callback(Object.assign(new Error('Use JPG, PNG, or WebP images and MP3, WAV, M4A, AAC, or OGG audio.'), { status: 400 }));
   },
 });
 
@@ -42,12 +44,15 @@ apiRouter.get('/batches/:batchId', (request, response) => {
   return response.json({ batch: presentBatch(batch) });
 });
 
-apiRouter.post('/batches', upload.array('images'), (request, response, next) => {
-  const files = request.files as Express.Multer.File[] | undefined;
+apiRouter.post('/batches', upload.fields([{ name: 'images', maxCount: config.maxBatchSize }, { name: 'audio', maxCount: 1 }]), (request, response, next) => {
+  const uploaded = request.files as Record<string, Express.Multer.File[]> | undefined;
+  const files = uploaded?.images;
+  const audioFile = uploaded?.audio?.[0];
+  const allFiles = [...(files ?? []), ...(audioFile ? [audioFile] : [])];
   const parsed = createBatchSchema.safeParse(request.body);
 
   if (!parsed.success || !files?.length) {
-    void Promise.all((files ?? []).map((file) => rm(file.path, { force: true })));
+    void Promise.all(allFiles.map((file) => rm(file.path, { force: true })));
     return response.status(400).json({
       error: !files?.length ? 'Select at least one image.' : 'Some render settings are invalid.',
       details: parsed.success ? undefined : parsed.error.flatten(),
@@ -55,14 +60,15 @@ apiRouter.post('/batches', upload.array('images'), (request, response, next) => 
   }
 
   if (!mediaEngine.get().ready) {
-    void Promise.all(files.map((file) => rm(file.path, { force: true })));
+    void Promise.all(allFiles.map((file) => rm(file.path, { force: true })));
     return response.status(503).json({ error: 'FFmpeg is unavailable. Check the server configuration and try again.' });
   }
 
   try {
     const batchId = randomUUID();
     const createdAt = new Date().toISOString();
-    const { name, jobOverrides, ...settings } = parsed.data;
+    const { name, jobOverrides, ...parsedSettings } = parsed.data;
+    const settings = { ...parsedSettings, fit: 'cover' as const };
     const usedNames = new Map<string, number>();
     const jobs: RenderJob[] = files.map((file, index) => {
       const stem = safeStem(file.originalname);
@@ -93,6 +99,8 @@ apiRouter.post('/batches', upload.array('images'), (request, response, next) => 
         id,
         originalName: file.originalname,
         inputPath: file.path,
+        audioPath: audioFile?.path,
+        audioName: audioFile?.originalname,
         outputPath: path.join(storagePaths.outputs, `${id}.${jobSettings.format}`),
         outputName,
         status: 'queued',
@@ -116,6 +124,7 @@ apiRouter.post('/batches', upload.array('images'), (request, response, next) => 
     renderQueue.enqueue(batchId, jobs);
     return response.status(202).json({ batch: presentBatch(batch) });
   } catch (error) {
+    void Promise.all(allFiles.map((file) => rm(file.path, { force: true })));
     return next(error);
   }
 });
@@ -189,7 +198,7 @@ apiRouter.post('/batches/:batchId/jobs/:jobId/rerender', async (request, respons
       outputPath,
       supersededOutputName: job.outputName,
       supersededOutputPath: job.outputPath,
-      settings: parsed.data.settings,
+      settings: { ...parsed.data.settings, fit: 'cover' },
       status: 'queued',
       progress: 0,
       error: undefined,
