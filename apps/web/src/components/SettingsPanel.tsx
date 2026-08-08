@@ -16,9 +16,9 @@ interface SettingsPanelProps {
 }
 
 const profiles: Array<{ label: string; detail: string; settings: Partial<RenderSettings> }> = [
-  { label: 'Campaign', detail: 'Full HD · MP4', settings: { resolution: '1080p', format: 'mp4', motion: 'zoom-in', focus: 'center', duration: 5, effectStart: 0, effectEnd: 5, effects: [{ motion: 'zoom-in', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 }], fps: 30, fit: 'cover', quality: 'high', fade: true } },
-  { label: 'Social', detail: 'Portrait · MP4', settings: { resolution: 'portrait', format: 'mp4', motion: 'zoom-in', focus: 'center', duration: 5, effectStart: 0.5, effectEnd: 4.5, effects: [{ motion: 'zoom-in', focus: 'center', strength: 45, effectStart: 0.5, effectEnd: 4.5 }], fps: 30, fit: 'cover', quality: 'balanced', fade: true } },
-  { label: 'Lightweight', detail: 'HD · WebM', settings: { resolution: '720p', format: 'webm', motion: 'still', focus: 'center', duration: 3, effectStart: 0, effectEnd: 3, effects: [{ motion: 'still', focus: 'center', strength: 0, effectStart: 0, effectEnd: 3 }], fps: 24, fit: 'cover', quality: 'draft', fade: false } },
+  { label: 'Campaign', detail: 'Full HD · MP4', settings: { resolution: '1080p', format: 'mp4', motion: 'zoom-in', focus: 'center', duration: 5, effectStart: 0, effectEnd: 5, effects: [{ motion: 'zoom-in', focus: 'center', strength: 50, easing: 'cinematic', effectStart: 0, effectEnd: 5 }], fps: 30, fit: 'cover', quality: 'high', fade: true } },
+  { label: 'Social', detail: 'Portrait · MP4', settings: { resolution: 'portrait', format: 'mp4', motion: 'zoom-in', focus: 'center', duration: 5, effectStart: 0.5, effectEnd: 4.5, effects: [{ motion: 'zoom-in', focus: 'center', strength: 45, easing: 'ease-in-out', effectStart: 0.5, effectEnd: 4.5 }], fps: 30, fit: 'cover', quality: 'balanced', fade: true } },
+  { label: 'Lightweight', detail: 'HD · WebM', settings: { resolution: '720p', format: 'webm', motion: 'still', focus: 'center', duration: 3, effectStart: 0, effectEnd: 3, effects: [{ motion: 'still', focus: 'center', strength: 0, easing: 'linear', effectStart: 0, effectEnd: 3 }], fps: 24, fit: 'cover', quality: 'draft', fade: false } },
 ];
 
 export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting, engineReady, onChange, onReset, onSubmit }: SettingsPanelProps) {
@@ -40,7 +40,11 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
       const ratio = (effect.strength ?? 50) / 100;
       const scale = 1 + 0.12 * ratio;
       const travel = 6 * ratio;
-      const eased = progress * progress * progress * (progress * (progress * 6 - 15) + 10);
+      const eased = effect.easing === 'linear' ? progress
+        : effect.easing === 'ease-in' ? progress ** 3
+          : effect.easing === 'ease-out' ? 1 - (1 - progress) ** 3
+            : effect.easing === 'ease-in-out' ? progress * progress * (3 - 2 * progress)
+              : progress * progress * progress * (progress * (progress * 6 - 15) + 10);
       if (effect.motion === 'zoom-in') return `scale(${1 + (scale - 1) * eased})`;
       if (effect.motion === 'zoom-out') return `scale(${scale - (scale - 1) * eased})`;
       if (effect.motion === 'pan-left') return `scale(${scale}) translateX(${travel - travel * 2 * eased}%)`;
