@@ -48,4 +48,27 @@ describe('render settings validation', () => {
     });
     expect(parsed.jobOverrides[0]).toEqual({ motion: 'pan-left', focus: 'top', effectStart: 0.5, effectEnd: 2.5 });
   });
+
+  it('accepts multiple ordered effects for one video', () => {
+    const parsed = createBatchSchema.parse({
+      ...validSettings,
+      effects: JSON.stringify([
+        { motion: 'zoom-in', focus: 'center', effectStart: 0, effectEnd: 2 },
+        { motion: 'pan-left', focus: 'top', effectStart: 2, effectEnd: 5 },
+      ]),
+    });
+    expect(parsed.effects).toHaveLength(2);
+    expect(parsed.effects[1]?.motion).toBe('pan-left');
+  });
+
+  it('rejects overlapping effect segments', () => {
+    const parsed = createBatchSchema.safeParse({
+      ...validSettings,
+      effects: JSON.stringify([
+        { motion: 'zoom-in', focus: 'center', effectStart: 0, effectEnd: 3 },
+        { motion: 'pan-left', focus: 'top', effectStart: 2, effectEnd: 5 },
+      ]),
+    });
+    expect(parsed.success).toBe(false);
+  });
 });
