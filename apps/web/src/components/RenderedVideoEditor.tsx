@@ -18,7 +18,7 @@ export function RenderedVideoEditor({ job, busy, onRename, onRerender, onClose }
   const [outputName, setOutputName] = useState(() => withoutExtension(job.outputName));
   const [settings, setSettings] = useState<RenderJob['settings']>(() => ({
     ...job.settings,
-    effects: (job.settings.effects?.length ? job.settings.effects : [{ motion: job.settings.motion, focus: job.settings.focus, strength: 50, easing: 'cinematic' as const, effectStart: job.settings.effectStart, effectEnd: job.settings.effectEnd }]).map((effect) => ({ ...effect, strength: effect.strength ?? 50, easing: effect.easing ?? 'cinematic' })),
+    effects: (job.settings.effects?.length ? job.settings.effects : [{ motion: job.settings.motion, focus: job.settings.focus, strength: 50, easing: 'cinematic' as const, speed: 1, effectStart: job.settings.effectStart, effectEnd: job.settings.effectEnd }]).map((effect) => ({ ...effect, strength: effect.strength ?? 50, easing: effect.easing ?? 'cinematic', speed: effect.speed ?? 1 })),
   }));
 
   const update = <K extends keyof RenderJob['settings']>(key: K, value: RenderJob['settings'][K]) => setSettings((current) => ({ ...current, [key]: value }));
