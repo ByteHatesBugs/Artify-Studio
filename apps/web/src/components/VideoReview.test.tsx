@@ -18,6 +18,8 @@ const settings: RenderJob['settings'] = {
   fade: true,
   background: '#09090b',
   audioVolume: 0.8,
+  audioSourceStart: 0,
+  audioVideoStart: 0,
   effects: [
     { motion: 'zoom-in', focus: 'center', strength: 40, effectStart: 0, effectEnd: 2.5 },
     { motion: 'pan-right', focus: 'center', strength: 70, effectStart: 2.5, effectEnd: 5 },
