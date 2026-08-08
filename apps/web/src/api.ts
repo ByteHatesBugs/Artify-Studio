@@ -1,4 +1,4 @@
-import type { Batch, HealthStatus, RenderSettings, SelectedImage } from './types';
+import type { Batch, HealthStatus, RenderSettings, SelectedAudio, SelectedImage } from './types';
 
 const readJson = async <T>(response: Response): Promise<T> => {
   const payload = await response.json().catch(() => ({}));
@@ -6,9 +6,10 @@ const readJson = async <T>(response: Response): Promise<T> => {
   return payload as T;
 };
 
-export const createBatch = async (images: SelectedImage[], settings: RenderSettings) => {
+export const createBatch = async (images: SelectedImage[], settings: RenderSettings, audio?: SelectedAudio) => {
   const form = new FormData();
   images.forEach((image) => form.append('images', image.file));
+  if (audio) form.append('audio', audio.file);
   Object.entries(settings).forEach(([key, value]) => form.append(key, key === 'effects' ? JSON.stringify(value) : String(value)));
   form.append('jobOverrides', JSON.stringify(images.map((image) => image.effectOverride ?? {})));
   const response = await fetch('/api/batches', { method: 'POST', body: form });
