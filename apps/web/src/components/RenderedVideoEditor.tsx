@@ -22,7 +22,7 @@ export function RenderedVideoEditor({ job, audioSource, busy, onRename, onRerend
     ...job.settings,
     audioSourceStart: job.settings.audioSourceStart ?? 0,
     audioVideoStart: job.settings.audioVideoStart ?? 0,
-    effects: (job.settings.effects?.length ? job.settings.effects : [{ motion: job.settings.motion, focus: job.settings.focus, strength: 50, effectStart: job.settings.effectStart, effectEnd: job.settings.effectEnd }]).map((effect) => ({ ...effect, strength: effect.strength ?? 50 })),
+    effects: (job.settings.effects?.length ? job.settings.effects : [{ motion: job.settings.motion, focus: job.settings.focus, strength: 50, easing: 'cinematic' as const, effectStart: job.settings.effectStart, effectEnd: job.settings.effectEnd }]).map((effect) => ({ ...effect, strength: effect.strength ?? 50, easing: effect.easing ?? 'cinematic' })),
   }));
 
   const update = <K extends keyof RenderJob['settings']>(key: K, value: RenderJob['settings'][K]) => setSettings((current) => ({ ...current, [key]: value }));
