@@ -18,7 +18,7 @@ export const config = {
   storageDir: path.resolve(projectRoot, process.env.STORAGE_DIR ?? './storage'),
   maxFileSizeBytes: numberFromEnv(process.env.MAX_FILE_SIZE_MB, 25) * 1024 * 1024,
   maxBatchSize: numberFromEnv(process.env.MAX_BATCH_SIZE, 50),
-  queueConcurrency: numberFromEnv(process.env.QUEUE_CONCURRENCY, 2),
+  queueConcurrency: numberFromEnv(process.env.QUEUE_CONCURRENCY, 1),
   jobTtlMs: numberFromEnv(process.env.JOB_TTL_HOURS, 24) * 60 * 60 * 1000,
 };
 
