@@ -43,4 +43,14 @@ describe('EffectStackEditor', () => {
     fireEvent.change(screen.getByRole('slider', { name: /effect 1 strength/i }), { target: { value: '75' } });
     expect(onChange).toHaveBeenCalledWith([{ motion: 'zoom-in', focus: 'center', strength: 75, effectStart: 0, effectEnd: 5 }]);
   });
+
+  it('offers vertical and diagonal motion effects', () => {
+    const onChange = vi.fn();
+    render(<EffectStackEditor duration={5} effects={[{ motion: 'zoom-in', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 }]} onChange={onChange} />);
+    const motion = screen.getByRole('combobox', { name: /motion/i });
+    expect(screen.getByRole('option', { name: 'Pan up' })).not.toBeNull();
+    expect(screen.getByRole('option', { name: 'Drift down right' })).not.toBeNull();
+    fireEvent.change(motion, { target: { value: 'drift-down-right' } });
+    expect(onChange).toHaveBeenCalledWith([{ motion: 'drift-down-right', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 }]);
+  });
 });
