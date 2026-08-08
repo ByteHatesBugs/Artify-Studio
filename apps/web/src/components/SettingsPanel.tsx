@@ -34,6 +34,10 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
   const estimatedSeconds = Math.ceil((imageCount * settings.duration / 2) * qualityFactor);
   const primaryEffect = settings.effects[0]!;
   const objectPosition = { center: 'center', top: 'center top', bottom: 'center bottom', left: 'left center', right: 'right center' }[primaryEffect.focus];
+  const isProfileSelected = (profile: (typeof profiles)[number]) => Object.entries(profile.settings).every(([key, value]) => {
+    const current = settings[key as keyof RenderSettings];
+    return Array.isArray(value) ? JSON.stringify(current) === JSON.stringify(value) : current === value;
+  });
 
   useEffect(() => {
     const element = previewRef.current;
@@ -99,7 +103,13 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
       <span className="field-label first-label"><Sparkles size={15} /> Quick profiles</span>
       <div className="profile-grid">
         {profiles.map((profile) => (
-          <button type="button" key={profile.label} onClick={() => onChange({ ...settings, ...profile.settings })}>
+          <button
+            type="button"
+            key={profile.label}
+            className={isProfileSelected(profile) ? 'selected' : ''}
+            aria-pressed={isProfileSelected(profile)}
+            onClick={() => onChange({ ...settings, ...profile.settings })}
+          >
             <strong>{profile.label}</strong><span>{profile.detail}</span>
           </button>
         ))}
