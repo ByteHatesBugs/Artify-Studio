@@ -1,4 +1,4 @@
-import type { Batch, HealthStatus, RenderSettings, SelectedAudio, SelectedImage } from './types';
+import type { Batch, HealthStatus, RenderSettings, SelectedImage } from './types';
 
 const readJson = async <T>(response: Response): Promise<T> => {
   const payload = await response.json().catch(() => ({}));
@@ -6,10 +6,9 @@ const readJson = async <T>(response: Response): Promise<T> => {
   return payload as T;
 };
 
-export const createBatch = async (images: SelectedImage[], settings: RenderSettings, audio?: SelectedAudio) => {
+export const createBatch = async (images: SelectedImage[], settings: RenderSettings) => {
   const form = new FormData();
   images.forEach((image) => form.append('images', image.file));
-  if (audio) form.append('audio', audio.file);
   Object.entries(settings).forEach(([key, value]) => form.append(key, key === 'effects' ? JSON.stringify(value) : String(value)));
   form.append('jobOverrides', JSON.stringify(images.map((image) => image.effectOverride ?? {})));
   const response = await fetch('/api/batches', { method: 'POST', body: form });
@@ -67,4 +66,3 @@ export const deleteBatch = async (id: string) => {
 export const batchDownloadUrl = (id: string) => `/api/batches/${id}/download`;
 export const jobDownloadUrl = (batchId: string, jobId: string) => `/api/batches/${batchId}/jobs/${jobId}/download`;
 export const jobPreviewUrl = (batchId: string, jobId: string) => `/api/batches/${batchId}/jobs/${jobId}/preview`;
-export const jobAudioPreviewUrl = (batchId: string, jobId: string) => `/api/batches/${batchId}/jobs/${jobId}/audio`;
