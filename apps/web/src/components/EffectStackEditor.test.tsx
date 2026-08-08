@@ -19,7 +19,7 @@ describe('EffectStackEditor', () => {
     fireEvent.click(screen.getByRole('button', { name: /add effect/i }));
     expect(onChange).toHaveBeenCalledWith([
       { motion: 'zoom-in', focus: 'center', strength: 50, effectStart: 0, effectEnd: 6 },
-      { motion: 'pan-right', focus: 'center', strength: 50, easing: 'cinematic', effectStart: 3, effectEnd: 6 },
+      { motion: 'pan-right', focus: 'center', strength: 50, easing: 'cinematic', speed: 1, effectStart: 3, effectEnd: 6 },
     ]);
   });
 
@@ -42,6 +42,13 @@ describe('EffectStackEditor', () => {
     render(<EffectStackEditor duration={5} effects={[{ motion: 'zoom-in', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 }]} onChange={onChange} />);
     fireEvent.change(screen.getByRole('slider', { name: /effect 1 strength/i }), { target: { value: '75' } });
     expect(onChange).toHaveBeenCalledWith([{ motion: 'zoom-in', focus: 'center', strength: 75, effectStart: 0, effectEnd: 5 }]);
+  });
+
+  it('updates an individual effect speed', () => {
+    const onChange = vi.fn();
+    render(<EffectStackEditor duration={5} effects={[{ motion: 'zoom-in', focus: 'center', strength: 50, speed: 1, effectStart: 0, effectEnd: 5 }]} onChange={onChange} />);
+    fireEvent.change(screen.getByRole('slider', { name: /effect 1 speed/i }), { target: { value: '1.75' } });
+    expect(onChange).toHaveBeenCalledWith([{ motion: 'zoom-in', focus: 'center', strength: 50, speed: 1.75, effectStart: 0, effectEnd: 5 }]);
   });
 
   it('offers vertical and diagonal motion effects', () => {
