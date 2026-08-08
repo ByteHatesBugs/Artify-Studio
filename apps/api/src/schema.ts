@@ -6,8 +6,8 @@ const hexColor = /^#[0-9a-fA-F]{6}$/;
 const effectSegmentSchema = z.object({
   motion: z.enum(MOTION_EFFECTS),
   focus: z.enum(EFFECT_FOCUSES).default('center'),
-  effectStart: z.coerce.number().min(0).max(30),
-  effectEnd: z.coerce.number().min(0.1).max(30),
+  effectStart: z.coerce.number().min(0).max(60),
+  effectEnd: z.coerce.number().min(0.1).max(60),
 });
 
 const effectsSchema = z.preprocess((value) => {
@@ -16,9 +16,9 @@ const effectsSchema = z.preprocess((value) => {
 }, z.array(effectSegmentSchema).min(1).max(8));
 
 const renderSettingsShape = {
-  duration: z.coerce.number().min(1).max(30).default(5),
-  effectStart: z.coerce.number().min(0).max(30).default(0),
-  effectEnd: z.coerce.number().min(0.1).max(30).default(5),
+  duration: z.coerce.number().min(1).max(60).default(5),
+  effectStart: z.coerce.number().min(0).max(60).default(0),
+  effectEnd: z.coerce.number().min(0.1).max(60).default(5),
   fps: z.coerce.number().int().min(24).max(60).default(30),
   resolution: z.enum(RESOLUTIONS).default('1080p'),
   motion: z.enum(MOTION_EFFECTS).default('zoom-in'),
@@ -34,8 +34,8 @@ const renderSettingsShape = {
 const jobOverrideSchema = z.object({
   motion: z.enum(MOTION_EFFECTS).optional(),
   focus: z.enum(EFFECT_FOCUSES).optional(),
-  effectStart: z.coerce.number().min(0).max(30).optional(),
-  effectEnd: z.coerce.number().min(0.1).max(30).optional(),
+  effectStart: z.coerce.number().min(0).max(60).optional(),
+  effectEnd: z.coerce.number().min(0.1).max(60).optional(),
   effects: effectsSchema.optional(),
 });
 
@@ -128,3 +128,12 @@ export const createBatchSchema = z.preprocess(
     });
   }),
 );
+
+export const renameRenderSchema = z.object({
+  outputName: z.string().trim().min(1).max(80),
+});
+
+export const rerenderJobSchema = z.object({
+  outputName: z.string().trim().min(1).max(80),
+  settings: renderSettingsSchema,
+});
