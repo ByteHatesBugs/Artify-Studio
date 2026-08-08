@@ -7,12 +7,14 @@ export type OutputFormat = 'mp4' | 'webm';
 export type FitMode = 'contain' | 'cover';
 export type QualityProfile = 'draft' | 'balanced' | 'high';
 export type EffectFocus = 'center' | 'top' | 'bottom' | 'left' | 'right';
+export type EffectEasing = 'cinematic' | 'ease-in-out' | 'ease-in' | 'ease-out' | 'linear';
 export type JobStatus = 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
 export interface EffectSegment {
   motion: MotionEffect;
   focus: EffectFocus;
   strength: number;
+  easing?: EffectEasing;
   effectStart: number;
   effectEnd: number;
 }
