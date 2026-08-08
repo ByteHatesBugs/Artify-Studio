@@ -41,6 +41,8 @@ export interface RenderJob {
   originalName: string;
   inputPath: string;
   outputPath: string;
+  supersededOutputPath?: string;
+  supersededOutputName?: string;
   outputName: string;
   status: JobStatus;
   progress: number;
