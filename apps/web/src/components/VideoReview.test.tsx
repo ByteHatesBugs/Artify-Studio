@@ -30,6 +30,7 @@ describe('VideoReview', () => {
     expect(container.querySelector('.video-stage.is-portrait')).toBeTruthy();
     expect(screen.getAllByRole('button', { name: 'Play preview' })).toHaveLength(2);
     expect(screen.getByRole('slider', { name: 'Seek through preview' })).toBeTruthy();
+    expect(screen.getByRole('slider', { name: 'Video playback position' })).toBeTruthy();
     expect(screen.getByRole('combobox', { name: 'Playback speed' })).toBeTruthy();
     expect(screen.getByText('campaign.mp4')).toBeTruthy();
     expect(screen.getByText(/2 effects · full-canvas output/i)).toBeTruthy();
