@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Blend, Clapperboard, Clock3, Crop, Eye, Gauge, MonitorUp, Play, RotateCcw, Sparkles } from 'lucide-react';
 import type { RenderSettings } from '../types';
 import { resolutionAspect, resolutionOptions } from '../resolutionOptions';
@@ -23,6 +23,7 @@ const profiles: Array<{ label: string; detail: string; settings: Partial<RenderS
 
 export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting, engineReady, onChange, onReset, onSubmit }: SettingsPanelProps) {
   const previewRef = useRef<HTMLImageElement>(null);
+  const [previewEffects, setPreviewEffects] = useState(settings.effects);
   const update = <K extends keyof RenderSettings>(key: K, value: RenderSettings[K]) => onChange({ ...settings, [key]: value });
   const qualityFactor = settings.quality === 'draft' ? 0.65 : settings.quality === 'high' ? 1.6 : 1;
   const estimatedSeconds = Math.ceil((imageCount * settings.duration / 2) * qualityFactor);
@@ -51,6 +52,11 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
   });
 
   useEffect(() => {
+    const timer = window.setTimeout(() => setPreviewEffects(settings.effects), 90);
+    return () => window.clearTimeout(timer);
+  }, [settings.effects]);
+
+  useEffect(() => {
     const element = previewRef.current;
     if (!element || !previewImage) return;
     const transformsFor = (effect: RenderSettings['effects'][number], progress: number) => {
@@ -74,11 +80,11 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
       if (effect.motion.startsWith('drift-')) return `scale(${scale}) translate(${horizontal}%, ${vertical}%)`;
       return 'scale(1)';
     };
-    const keyframes: Keyframe[] = Array.from({ length: 121 }, (_, index) => {
-      const offset = index / 120;
+    const keyframes: Keyframe[] = Array.from({ length: 61 }, (_, index) => {
+      const offset = index / 60;
       const time = offset * settings.duration;
-      const active = settings.effects.find((effect) => time >= effect.effectStart && time <= effect.effectEnd);
-      const completed = [...settings.effects].filter((effect) => effect.effectEnd < time).sort((left, right) => right.effectEnd - left.effectEnd)[0];
+      const active = previewEffects.find((effect) => time >= effect.effectStart && time <= effect.effectEnd);
+      const completed = [...previewEffects].filter((effect) => effect.effectEnd < time).sort((left, right) => right.effectEnd - left.effectEnd)[0];
       const effect = active ?? completed;
       const progress = !effect ? 0 : active ? Math.max(0, Math.min(1, (time - effect.effectStart) / (effect.effectEnd - effect.effectStart))) : 1;
       return { transform: effect ? transformsFor(effect, progress) : 'scale(1)', offset };
@@ -95,7 +101,7 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
       motionAnimation.cancel();
       fadeAnimation?.cancel();
     };
-  }, [previewImage, settings.duration, settings.effects, settings.fade]);
+  }, [previewEffects, previewImage, settings.duration, settings.fade]);
 
   const changeDuration = (duration: number) => {
     const effects = settings.effects.map((effect) => ({
