@@ -55,6 +55,7 @@ describe('BatchStore', () => {
     expect(restored.get('batch-1')?.jobs[0]?.attempts).toBe(1);
     expect(restored.get('batch-1')?.jobs[0]?.settings.effects[0]?.strength).toBe(50);
     expect(restored.get('batch-1')?.jobs[0]?.settings.effects[0]?.easing).toBe('cinematic');
+    expect(restored.get('batch-1')?.jobs[0]?.settings.effects[0]?.speed).toBe(1);
     expect('audioSourceStart' in restored.get('batch-1')!.jobs[0]!.settings).toBe(false);
     expect('audioVideoStart' in restored.get('batch-1')!.jobs[0]!.settings).toBe(false);
   });
