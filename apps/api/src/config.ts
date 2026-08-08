@@ -15,6 +15,7 @@ export const config = {
   port: numberFromEnv(process.env.PORT, 8787),
   clientOrigin: process.env.CLIENT_ORIGIN ?? 'http://localhost:5173',
   ffmpegPath: process.env.FFMPEG_PATH ?? 'ffmpeg',
+  ffprobePath: process.env.FFPROBE_PATH ?? 'ffprobe',
   storageDir: path.resolve(projectRoot, process.env.STORAGE_DIR ?? './storage'),
   maxFileSizeBytes: numberFromEnv(process.env.MAX_FILE_SIZE_MB, 25) * 1024 * 1024,
   maxBatchSize: numberFromEnv(process.env.MAX_BATCH_SIZE, 50),
