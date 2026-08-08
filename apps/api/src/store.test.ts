@@ -16,7 +16,7 @@ const createCancelledBatch = (): Batch => ({
   name: 'Persistence test',
   status: 'cancelled',
   progress: 0,
-  settings: { duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'still', focus: 'center', format: 'mp4', fit: 'contain', quality: 'balanced', fade: true, background: '#09090b', effects: [{ motion: 'still', focus: 'center', effectStart: 0, effectEnd: 5 }] },
+  settings: { duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'still', focus: 'center', format: 'mp4', fit: 'contain', quality: 'balanced', fade: true, background: '#09090b', audioVolume: 0.8, effects: [{ motion: 'still', focus: 'center', effectStart: 0, effectEnd: 5 }] },
   createdAt: new Date().toISOString(),
   completedAt: new Date().toISOString(),
   jobs: [{
@@ -28,7 +28,7 @@ const createCancelledBatch = (): Batch => ({
     status: 'cancelled',
     progress: 0,
     attempts: 1,
-    settings: { duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'still', focus: 'center', format: 'mp4', fit: 'contain', quality: 'balanced', fade: true, background: '#09090b', effects: [{ motion: 'still', focus: 'center', effectStart: 0, effectEnd: 5 }] },
+    settings: { duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'still', focus: 'center', format: 'mp4', fit: 'contain', quality: 'balanced', fade: true, background: '#09090b', audioVolume: 0.8, effects: [{ motion: 'still', focus: 'center', effectStart: 0, effectEnd: 5 }] },
     createdAt: new Date().toISOString(),
   }],
 });
