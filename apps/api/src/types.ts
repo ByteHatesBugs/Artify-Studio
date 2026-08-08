@@ -1,5 +1,5 @@
 export const MOTION_EFFECTS = ['still', 'zoom-in', 'zoom-out', 'pan-left', 'pan-right'] as const;
-export const RESOLUTIONS = ['720p', '1080p', 'square', 'portrait'] as const;
+export const RESOLUTIONS = ['480p', '720p', '1080p', '1440p', '4k', 'square-720', 'square', 'portrait-720', 'portrait', 'feed-portrait'] as const;
 export const OUTPUT_FORMATS = ['mp4', 'webm'] as const;
 export const FIT_MODES = ['contain', 'cover'] as const;
 export const QUALITY_PROFILES = ['draft', 'balanced', 'high'] as const;
@@ -33,6 +33,7 @@ export interface RenderSettings {
   quality: QualityProfile;
   fade: boolean;
   background: string;
+  audioVolume: number;
   effects: EffectSegment[];
 }
 
@@ -40,6 +41,8 @@ export interface RenderJob {
   id: string;
   originalName: string;
   inputPath: string;
+  audioPath?: string;
+  audioName?: string;
   outputPath: string;
   supersededOutputPath?: string;
   supersededOutputName?: string;
