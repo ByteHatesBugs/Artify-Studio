@@ -82,7 +82,7 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
       effectEnd: Number(((effect.effectEnd / settings.duration) * duration).toFixed(2)),
     }));
     const primary = effects[0]!;
-    onChange({ ...settings, duration, effects, motion: primary.motion, focus: primary.focus, effectStart: primary.effectStart, effectEnd: primary.effectEnd });
+    onChange({ ...settings, duration, audioVideoStart: Math.min(settings.audioVideoStart, Math.max(0, duration - 0.05)), effects, motion: primary.motion, focus: primary.focus, effectStart: primary.effectStart, effectEnd: primary.effectEnd });
   };
 
   const changeEffects = (effects: RenderSettings['effects']) => {
