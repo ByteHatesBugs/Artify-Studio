@@ -102,7 +102,7 @@ export function VideoReview({ source, outputName, settings }: VideoReviewProps) 
   };
 
   const progress = duration ? (currentTime / duration) * 100 : 0;
-  const effects = settings.effects?.length ? settings.effects : [{ motion: settings.motion, focus: settings.focus, strength: 50, effectStart: settings.effectStart, effectEnd: settings.effectEnd }];
+  const effects = settings.effects?.length ? settings.effects : [{ motion: settings.motion, focus: settings.focus, strength: 50, easing: 'cinematic' as const, effectStart: settings.effectStart, effectEnd: settings.effectEnd }];
   const rulerMarks = Array.from({ length: 6 }, (_, index) => (duration / 5) * index);
 
   return (
@@ -163,13 +163,13 @@ export function VideoReview({ source, outputName, settings }: VideoReviewProps) 
           {rulerMarks.map((mark) => <span key={mark} style={{ left: `${duration ? (mark / duration) * 100 : 0}%` }}>{formatTime(mark)}</span>)}
         </div>
         <div className="timeline-clip">
-          <div className="clip-fill"><strong>{outputName}</strong><span>{effects.length} effect{effects.length === 1 ? '' : 's'} · strength-aware · full-canvas output</span></div>
+          <div className="clip-fill"><strong>{outputName}</strong><span>{effects.length} precision effect{effects.length === 1 ? '' : 's'} · curve & strength aware · full canvas</span></div>
           {effects.map((effect, index) => (
             <span
               className={`clip-effect effect-color-${index % 4}`}
               key={`${effect.motion}-${index}`}
               style={{ left: `${duration ? (effect.effectStart / duration) * 100 : 0}%`, width: `${duration ? ((effect.effectEnd - effect.effectStart) / duration) * 100 : 100}%` }}
-              title={`${index + 1}. ${effect.motion.replace('-', ' ')} · ${effect.strength}% strength · ${effect.effectStart}s–${effect.effectEnd}s`}
+              title={`${index + 1}. ${effect.motion.replaceAll('-', ' ')} · ${effect.easing ?? 'cinematic'} curve · ${effect.strength}% strength · ${effect.effectStart}s–${effect.effectEnd}s`}
             />
           ))}
           <span className="timeline-playhead" style={{ left: `${progress}%` }} aria-hidden="true"><i /></span>
