@@ -13,6 +13,13 @@ export type QualityProfile = (typeof QUALITY_PROFILES)[number];
 export type EffectFocus = (typeof EFFECT_FOCUSES)[number];
 export type JobStatus = 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
+export interface EffectSegment {
+  motion: MotionEffect;
+  focus: EffectFocus;
+  effectStart: number;
+  effectEnd: number;
+}
+
 export interface RenderSettings {
   duration: number;
   effectStart: number;
@@ -26,6 +33,7 @@ export interface RenderSettings {
   quality: QualityProfile;
   fade: boolean;
   background: string;
+  effects: EffectSegment[];
 }
 
 export interface RenderJob {
