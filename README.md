@@ -29,8 +29,10 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Rename-only updates and safe edit-and-rerender workflows for completed videos
 - Filterable render history with loading, empty, busy, confirmation, and notification states
 - Responsive, keyboard-accessible interface
+- Locally bundled Inter and Manrope variable typography with no external font dependency
+- Searchable render history, live status counts, `/` search focus, and `Ctrl/Command + Enter` rendering
 - Lazy preview decoding and viewport-aware rendering for smooth large-batch editing
-- Reduced render working-canvas overhead, non-overlapping polling, and throttled preview updates
+- Lazy-loaded review/editor panels, deduplicated polling updates, deferred preference saves, and throttled preview updates
 - Automatic input cleanup and configurable output retention
 
 ## Architecture
