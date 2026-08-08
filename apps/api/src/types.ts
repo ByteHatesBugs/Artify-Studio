@@ -1,4 +1,8 @@
-export const MOTION_EFFECTS = ['still', 'zoom-in', 'zoom-out', 'pan-left', 'pan-right'] as const;
+export const MOTION_EFFECTS = [
+  'still', 'zoom-in', 'zoom-out',
+  'pan-left', 'pan-right', 'pan-up', 'pan-down',
+  'drift-up-left', 'drift-up-right', 'drift-down-left', 'drift-down-right',
+] as const;
 export const RESOLUTIONS = ['480p', '720p', '1080p', '1440p', '4k', 'square-720', 'square', 'portrait-720', 'portrait', 'feed-portrait'] as const;
 export const OUTPUT_FORMATS = ['mp4', 'webm'] as const;
 export const FIT_MODES = ['contain', 'cover'] as const;
