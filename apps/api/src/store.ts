@@ -29,7 +29,8 @@ export class BatchStore {
       batch.settings.audioVolume ??= 0.8;
       batch.settings.effectStart ??= 0;
       batch.settings.effectEnd ??= batch.settings.duration;
-      batch.settings.effects ??= [{ motion: batch.settings.motion, focus: batch.settings.focus ?? 'center', effectStart: batch.settings.effectStart, effectEnd: batch.settings.effectEnd }];
+      batch.settings.effects ??= [{ motion: batch.settings.motion, focus: batch.settings.focus ?? 'center', strength: 50, effectStart: batch.settings.effectStart, effectEnd: batch.settings.effectEnd }];
+      for (const effect of batch.settings.effects) effect.strength ??= 50;
       const jobs: RenderJob[] = [];
       for (const job of batch.jobs) {
         job.settings.fit ??= batch.settings.fit;
@@ -38,7 +39,8 @@ export class BatchStore {
         job.settings.audioVolume ??= batch.settings.audioVolume;
         job.settings.effectStart ??= batch.settings.effectStart;
         job.settings.effectEnd ??= batch.settings.effectEnd;
-        job.settings.effects ??= [{ motion: job.settings.motion, focus: job.settings.focus ?? 'center', effectStart: job.settings.effectStart, effectEnd: job.settings.effectEnd }];
+        job.settings.effects ??= [{ motion: job.settings.motion, focus: job.settings.focus ?? 'center', strength: 50, effectStart: job.settings.effectStart, effectEnd: job.settings.effectEnd }];
+        for (const effect of job.settings.effects) effect.strength ??= 50;
         job.attempts ??= job.startedAt ? 1 : 0;
         if (job.audioPath) {
           const audioExists = await access(job.audioPath).then(() => true).catch(() => false);
