@@ -197,9 +197,10 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
         <div><span>Profile</span><strong>{settings.quality}</strong></div>
       </div>
       {imageCount > 1 && <p className="batch-settings-note">These are batch defaults. Use “Effect” on any image to set its own motion, focus, and timing.</p>}
-      <button className="primary-button" type="button" onClick={onSubmit} disabled={!imageCount || isSubmitting || !settings.name.trim() || !engineReady}>
+      <button className="primary-button" type="button" onClick={onSubmit} disabled={!imageCount || isSubmitting || !settings.name.trim() || !engineReady} title="Render batch · Ctrl or Command + Enter">
         {isSubmitting ? <span className="spinner" /> : <Play size={17} fill="currentColor" />}
         {isSubmitting ? 'Uploading batch…' : !engineReady ? 'Render engine unavailable' : `Render ${imageCount || 0} video${imageCount === 1 ? '' : 's'}`}
+        {!isSubmitting && engineReady && <kbd>Ctrl/⌘ ↵</kbd>}
       </button>
       <p className="privacy-note">{engineReady ? 'Files stay on your processing server and expire automatically.' : 'Ask the server administrator to configure FFmpeg.'}</p>
     </aside>
