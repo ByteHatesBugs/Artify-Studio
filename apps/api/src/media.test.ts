@@ -16,6 +16,8 @@ const settings: RenderSettings = {
   fade: true,
   background: '#09090b',
   audioVolume: 0.8,
+  audioSourceStart: 0,
+  audioVideoStart: 0,
   effects: [{ motion: 'zoom-in', focus: 'center', strength: 50, effectStart: 1, effectEnd: 4 }],
 };
 
@@ -54,10 +56,10 @@ describe('media command construction', () => {
   });
 
   it('loops and mixes an uploaded soundtrack into the final video', () => {
-    const job = { inputPath: 'input.jpg', audioPath: 'music.mp3', outputPath: 'output.mp4', settings: { ...settings, audioVolume: 0.65 } } as RenderJob;
+    const job = { inputPath: 'input.jpg', audioPath: 'music.mp3', outputPath: 'output.mp4', settings: { ...settings, audioVolume: 0.65, audioSourceStart: 12.5, audioVideoStart: 1.25 } } as RenderJob;
     const args = buildFfmpegArgs(job);
-    expect(args.slice(args.indexOf('-stream_loop'), args.indexOf('-stream_loop') + 4)).toEqual(['-stream_loop', '-1', '-i', 'music.mp3']);
-    expect(args).toContain('volume=0.65');
+    expect(args.slice(args.indexOf('-stream_loop'), args.indexOf('-stream_loop') + 6)).toEqual(['-stream_loop', '-1', '-ss', '12.5', '-i', 'music.mp3']);
+    expect(args).toContain('atrim=duration=3.75,asetpts=PTS-STARTPTS,adelay=1250:all=1,volume=0.65');
     expect(args).toContain('aac');
     expect(args).toContain('-shortest');
   });
