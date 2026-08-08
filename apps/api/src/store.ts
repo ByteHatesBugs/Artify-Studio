@@ -35,6 +35,7 @@ export class BatchStore {
       for (const effect of batch.settings.effects) {
         effect.strength ??= 50;
         effect.easing ??= 'cinematic';
+        effect.speed ??= 1;
       }
       const jobs: RenderJob[] = [];
       for (const job of batch.jobs) {
@@ -50,6 +51,7 @@ export class BatchStore {
         for (const effect of job.settings.effects) {
           effect.strength ??= 50;
           effect.easing ??= 'cinematic';
+          effect.speed ??= 1;
         }
         job.attempts ??= job.startedAt ? 1 : 0;
         if (job.audioPath) await rm(job.audioPath, { force: true }).catch(() => undefined);
