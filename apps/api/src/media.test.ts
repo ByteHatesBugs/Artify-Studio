@@ -35,8 +35,8 @@ describe('media command construction', () => {
   it('holds motion outside the selected effect window', () => {
     const filter = buildVideoFilter({ ...settings, fps: 24, effectStart: 1.5, effectEnd: 3.5, motion: 'pan-right', effects: [{ motion: 'pan-right', focus: 'center', strength: 50, effectStart: 1.5, effectEnd: 3.5 }] });
     expect(filter).toContain('clip((on-36)/48,0,1)');
-    expect(filter).toContain("x='(iw-iw/zoom)*(if(lt(on,36)");
-    expect(filter).toContain("z='if(lt(on,36),1.06");
+    expect(filter).toContain("x='(iw-iw/zoom)*(if(between(on,36,84)");
+    expect(filter).toContain("z='if(between(on,36,84),1.06");
   });
 
   it('passes file paths as separate process arguments', () => {
@@ -69,10 +69,10 @@ describe('media command construction', () => {
 
   it('anchors zoom motion at the selected focal placement', () => {
     const filter = buildVideoFilter({ ...settings, focus: 'bottom', effects: [{ motion: 'zoom-in', focus: 'bottom', strength: 50, effectStart: 1, effectEnd: 4 }] });
-    expect(filter).toContain("y='(ih-ih/zoom)*(if(lt(on,30),1");
+    expect(filter).toContain("y='(ih-ih/zoom)*(if(between(on,30,120),1");
   });
 
-  it('builds continuous expressions for multiple ordered effects', () => {
+  it('builds smooth expressions for multiple effects', () => {
     const filter = buildVideoFilter({
       ...settings,
       effects: [
@@ -82,7 +82,21 @@ describe('media command construction', () => {
     });
     expect(filter).toContain('clip((on-0)/60,0,1)');
     expect(filter).toContain('clip((on-60)/90,0,1)');
-    expect(filter).toContain('if(lt(on,60)');
+    expect(filter).toContain('if(between(on,60,150)');
+  });
+
+  it('gives the first listed effect priority during overlaps', () => {
+    const filter = buildVideoFilter({
+      ...settings,
+      effects: [
+        { motion: 'zoom-in', focus: 'center', strength: 35, effectStart: 2, effectEnd: 5 },
+        { motion: 'pan-right', focus: 'center', strength: 70, effectStart: 0, effectEnd: 4 },
+      ],
+    });
+    const firstPriority = filter.indexOf('if(between(on,60,150)');
+    const secondPriority = filter.indexOf('if(between(on,0,120)');
+    expect(firstPriority).toBeGreaterThan(-1);
+    expect(secondPriority).toBeGreaterThan(firstPriority);
   });
 
   it('maps effect strength to subtle and strong motion amplitudes', () => {
