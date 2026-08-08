@@ -1,6 +1,6 @@
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertCircle, Check, ChevronUp, CirclePlay, Download, Film, Inbox, LoaderCircle, Pencil, RotateCcw, Search, Square, Trash2, X } from 'lucide-react';
-import { batchDownloadUrl, jobDownloadUrl, jobPreviewUrl } from '../api';
+import { AlertCircle, Check, ChevronUp, CirclePlay, Download, Film, History, Inbox, LoaderCircle, Pencil, RotateCcw, Search, Square, Trash2, X } from 'lucide-react';
+import { batchDownloadUrl, jobAudioPreviewUrl, jobDownloadUrl, jobPreviewUrl } from '../api';
 import type { Batch, JobStatus, RenderJob } from '../types';
 
 const VideoReview = lazy(() => import('./VideoReview').then((module) => ({ default: module.VideoReview })));
@@ -33,14 +33,40 @@ const StatusIcon = ({ status }: { status: JobStatus }) => {
 };
 
 type QueueFilter = 'all' | 'active' | 'ready' | 'attention';
+const searchStorageKey = 'renderflow:render-search';
+const searchHistoryStorageKey = 'renderflow:render-search-history';
+const filterStorageKey = 'renderflow:render-filter';
+const readStorage = (key: string) => {
+  try { return localStorage.getItem(key); } catch { return null; }
+};
+const writeStorage = (key: string, value: string) => {
+  try { localStorage.setItem(key, value); } catch { /* Persistence may be disabled in private contexts. */ }
+};
+const loadSearchHistory = () => {
+  try {
+    const stored = JSON.parse(readStorage(searchHistoryStorageKey) ?? '[]');
+    return Array.isArray(stored) ? stored.filter((item): item is string => typeof item === 'string').slice(0, 8) : [];
+  } catch { return []; }
+};
 
 export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onRenameJob, onRerenderJob, onDelete }: BatchQueueProps) {
-  const [filter, setFilter] = useState<QueueFilter>('all');
-  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<QueueFilter>(() => {
+    const saved = readStorage(filterStorageKey);
+    return saved === 'active' || saved === 'ready' || saved === 'attention' ? saved : 'all';
+  });
+  const [query, setQuery] = useState(() => readStorage(searchStorageKey) ?? '');
+  const [recentSearches, setRecentSearches] = useState(loadSearchHistory);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [previewKey, setPreviewKey] = useState<string | null>(null);
   const [editorKey, setEditorKey] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
+  const searchCandidates = useMemo(() => Array.from(new Set(batches.flatMap((batch) => [batch.name, ...batch.jobs.flatMap((job) => [job.outputName, job.originalName])]))), [batches]);
+  const suggestions = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    const source = needle ? [...searchCandidates, ...recentSearches].filter((item) => item.toLowerCase().includes(needle)) : recentSearches;
+    return Array.from(new Map(source.map((item) => [item.toLowerCase(), item])).values()).slice(0, 6);
+  }, [query, recentSearches, searchCandidates]);
   const visibleBatches = useMemo(() => batches.filter((batch) => {
     if (filter === 'active') return batch.status === 'queued' || batch.status === 'processing';
     if (filter === 'ready') return batch.status === 'completed';
@@ -72,6 +98,28 @@ export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onRen
     return () => window.removeEventListener('keydown', focusSearch);
   }, []);
 
+  useEffect(() => {
+    writeStorage(searchStorageKey, query);
+    writeStorage(filterStorageKey, filter);
+  }, [filter, query]);
+
+  const rememberSearch = (value: string) => {
+    const normalized = value.trim();
+    if (!normalized) return;
+    setRecentSearches((current) => {
+      const next = [normalized, ...current.filter((item) => item.toLowerCase() !== normalized.toLowerCase())].slice(0, 8);
+      writeStorage(searchHistoryStorageKey, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const chooseSuggestion = (value: string) => {
+    setQuery(value);
+    rememberSearch(value);
+    setSuggestionsOpen(false);
+    searchRef.current?.focus();
+  };
+
   return (
     <section className="queue-section" aria-labelledby="queue-heading">
       <div className="section-heading">
@@ -80,7 +128,10 @@ export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onRen
           <h2 id="queue-heading">Your output queue</h2>
         </div>
         <div className="queue-tools">
-          <label className="queue-search"><Search size={13} /><input ref={searchRef} aria-label="Search render history" value={query} placeholder="Search renders" onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Escape') setQuery(''); }} />{query && <button type="button" aria-label="Clear render search" onClick={() => setQuery('')}><X size={12} /></button>}<kbd>/</kbd></label>
+          <div className="queue-search-shell" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setSuggestionsOpen(false); }}>
+            <label className="queue-search"><Search size={13} /><input ref={searchRef} role="combobox" aria-label="Search render history" aria-autocomplete="list" aria-controls="render-search-suggestions" aria-expanded={suggestionsOpen && suggestions.length > 0} value={query} placeholder="Search renders" onFocus={() => setSuggestionsOpen(true)} onChange={(event) => { setQuery(event.target.value); setSuggestionsOpen(true); }} onKeyDown={(event) => { if (event.key === 'Escape') { setQuery(''); setSuggestionsOpen(false); } else if (event.key === 'Enter') { rememberSearch(query); setSuggestionsOpen(false); } }} />{query && <button type="button" aria-label="Clear render search" onClick={() => { setQuery(''); setSuggestionsOpen(true); }}><X size={12} /></button>}<kbd>/</kbd></label>
+            {suggestionsOpen && suggestions.length > 0 && <div className="queue-search-suggestions" id="render-search-suggestions" role="listbox" aria-label="Render search suggestions">{suggestions.map((suggestion) => <button type="button" role="option" key={suggestion} onMouseDown={(event) => event.preventDefault()} onClick={() => chooseSuggestion(suggestion)}><History size={11} /><span>{suggestion}</span></button>)}</div>}
+          </div>
           <div className="queue-filters" aria-label="Filter renders">
             {filters.map((option) => <button type="button" key={option.value} className={filter === option.value ? 'selected' : ''} onClick={() => setFilter(option.value)}>{option.label}</button>)}
           </div>
@@ -154,6 +205,7 @@ export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onRen
                         <Suspense fallback={<div className="panel-loading"><span className="spinner" /> Loading editor…</div>}>
                           <RenderedVideoEditor
                             job={job}
+                            audioSource={job.audioName ? jobAudioPreviewUrl(batch.id, job.id) : undefined}
                             busy={busy}
                             onRename={(outputName) => onRenameJob(batch.id, job.id, outputName)}
                             onRerender={(outputName, settings) => onRerenderJob(batch.id, job.id, outputName, settings)}
