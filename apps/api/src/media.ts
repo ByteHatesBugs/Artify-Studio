@@ -3,16 +3,22 @@ import { config } from './config.js';
 import type { EffectSegment, RenderJob, RenderSettings, Resolution } from './types.js';
 
 const dimensions: Record<Resolution, [number, number]> = {
+  '480p': [854, 480],
   '720p': [1280, 720],
   '1080p': [1920, 1080],
+  '1440p': [2560, 1440],
+  '4k': [3840, 2160],
+  'square-720': [720, 720],
   square: [1080, 1080],
+  'portrait-720': [720, 1280],
   portrait: [1080, 1920],
+  'feed-portrait': [1080, 1350],
 };
 
 const qualityProfiles = {
   draft: { mp4Crf: '28', preset: 'veryfast', webmCrf: '38', cpuUsed: '6' },
-  balanced: { mp4Crf: '22', preset: 'medium', webmCrf: '30', cpuUsed: '4' },
-  high: { mp4Crf: '18', preset: 'slow', webmCrf: '22', cpuUsed: '2' },
+  balanced: { mp4Crf: '22', preset: 'fast', webmCrf: '30', cpuUsed: '5' },
+  high: { mp4Crf: '18', preset: 'medium', webmCrf: '22', cpuUsed: '3' },
 } as const;
 
 interface MotionState {
@@ -55,9 +61,9 @@ export const buildVideoFilter = (settings: RenderSettings) => {
     effectStart: settings.effectStart,
     effectEnd: settings.effectEnd,
   }];
-  const workingScale = effects.every((effect) => effect.motion === 'still') ? 1 : 2;
-  const canvasWidth = width * workingScale;
-  const canvasHeight = height * workingScale;
+  const workingScale = effects.every((effect) => effect.motion === 'still') ? 1 : 1.12;
+  const canvasWidth = Math.ceil((width * workingScale) / 2) * 2;
+  const canvasHeight = Math.ceil((height * workingScale) / 2) * 2;
   const focus = effects[0]?.focus ?? settings.focus ?? 'center';
   const horizontalCrop = focus === 'left' ? '0' : focus === 'right' ? 'iw-ow' : '(iw-ow)/2';
   const verticalCrop = focus === 'top' ? '0' : focus === 'bottom' ? 'ih-oh' : '(ih-oh)/2';
@@ -110,16 +116,24 @@ export const buildFfmpegArgs = (job: RenderJob) => {
   const quality = qualityProfiles[job.settings.quality];
   const args = [
     '-hide_banner', '-y', '-loop', '1', '-i', job.inputPath,
+  ];
+  if (job.audioPath) args.push('-stream_loop', '-1', '-i', job.audioPath);
+  args.push(
     '-vf', buildVideoFilter(job.settings),
     '-t', String(job.settings.duration), '-r', String(job.settings.fps),
     '-g', String(job.settings.fps),
     '-progress', 'pipe:1', '-nostats',
-  ];
+  );
+
+  if (job.audioPath) args.push('-map', '0:v:0', '-map', '1:a:0', '-af', `volume=${job.settings.audioVolume}`, '-shortest');
+  else args.push('-an');
 
   if (job.settings.format === 'webm') {
     args.push('-c:v', 'libvpx-vp9', '-crf', quality.webmCrf, '-b:v', '0', '-cpu-used', quality.cpuUsed);
+    if (job.audioPath) args.push('-c:a', 'libopus', '-b:a', '160k');
   } else {
     args.push('-c:v', 'libx264', '-preset', quality.preset, '-crf', quality.mp4Crf, '-keyint_min', String(job.settings.fps), '-sc_threshold', '0', '-movflags', '+faststart');
+    if (job.audioPath) args.push('-c:a', 'aac', '-b:a', '192k');
   }
 
   args.push(job.outputPath);
