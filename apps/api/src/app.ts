@@ -24,9 +24,9 @@ export const createApp = () => {
   const errorHandler: ErrorRequestHandler = (error, _request, response, _next) => {
     if (error instanceof multer.MulterError) {
       const message = error.code === 'LIMIT_FILE_SIZE'
-        ? `Each image or audio file must be smaller than ${Math.round(config.maxFileSizeBytes / 1024 / 1024)} MB.`
+        ? `Each image must be smaller than ${Math.round(config.maxFileSizeBytes / 1024 / 1024)} MB.`
         : error.code === 'LIMIT_FILE_COUNT'
-          ? `A batch can contain up to ${config.maxBatchSize} images and one soundtrack.`
+          ? `A batch can contain up to ${config.maxBatchSize} images.`
           : error.message;
       response.status(400).json({ error: message });
       return;
