@@ -25,9 +25,14 @@ export const buildVideoFilter = (settings: RenderSettings) => {
   const effectFrames = Math.max(1, Math.round((settings.effectEnd - settings.effectStart) * settings.fps));
   const linearProgress = `clip((on-${effectStartFrame})/${effectFrames},0,1)`;
   const effectProgress = `(${linearProgress})*(${linearProgress})*(3-2*(${linearProgress}))`;
+  const focus = settings.focus ?? 'center';
+  const horizontalCrop = focus === 'left' ? '0' : focus === 'right' ? 'iw-ow' : '(iw-ow)/2';
+  const verticalCrop = focus === 'top' ? '0' : focus === 'bottom' ? 'ih-oh' : '(ih-oh)/2';
+  const horizontalPad = focus === 'left' ? '0' : focus === 'right' ? 'ow-iw' : '(ow-iw)/2';
+  const verticalPad = focus === 'top' ? '0' : focus === 'bottom' ? 'oh-ih' : '(oh-ih)/2';
   const base = settings.fit === 'cover'
-    ? `scale=${canvasWidth}:${canvasHeight}:force_original_aspect_ratio=increase,crop=${canvasWidth}:${canvasHeight}`
-    : `scale=${canvasWidth}:${canvasHeight}:force_original_aspect_ratio=decrease,pad=${canvasWidth}:${canvasHeight}:(ow-iw)/2:(oh-ih)/2:${settings.background}`;
+    ? `scale=${canvasWidth}:${canvasHeight}:force_original_aspect_ratio=increase,crop=${canvasWidth}:${canvasHeight}:${horizontalCrop}:${verticalCrop}`
+    : `scale=${canvasWidth}:${canvasHeight}:force_original_aspect_ratio=decrease,pad=${canvasWidth}:${canvasHeight}:${horizontalPad}:${verticalPad}:${settings.background}`;
   const fadeDuration = Math.min(0.5, settings.duration / 4);
   const fades = settings.fade
     ? `,fade=t=in:st=0:d=${fadeDuration},fade=t=out:st=${Math.max(0, settings.duration - fadeDuration)}:d=${fadeDuration}`
@@ -42,8 +47,8 @@ export const buildVideoFilter = (settings: RenderSettings) => {
     ? `(iw-iw/zoom)*(1-${effectProgress})`
     : settings.motion === 'pan-right'
       ? `(iw-iw/zoom)*${effectProgress}`
-      : '(iw-iw/zoom)/2';
-  const y = '(ih-ih/zoom)/2';
+      : focus === 'left' ? '0' : focus === 'right' ? '(iw-iw/zoom)' : '(iw-iw/zoom)/2';
+  const y = focus === 'top' ? '0' : focus === 'bottom' ? '(ih-ih/zoom)' : '(ih-ih/zoom)/2';
 
   return `${base},zoompan=z='${zoom}':x='${x}':y='${y}':d=${frames}:s=${width}x${height}:fps=${settings.fps}${fades},format=yuv420p`;
 };
@@ -54,13 +59,14 @@ export const buildFfmpegArgs = (job: RenderJob) => {
     '-hide_banner', '-y', '-loop', '1', '-i', job.inputPath,
     '-vf', buildVideoFilter(job.settings),
     '-t', String(job.settings.duration), '-r', String(job.settings.fps),
+    '-g', String(job.settings.fps),
     '-progress', 'pipe:1', '-nostats',
   ];
 
   if (job.settings.format === 'webm') {
     args.push('-c:v', 'libvpx-vp9', '-crf', quality.webmCrf, '-b:v', '0', '-cpu-used', quality.cpuUsed);
   } else {
-    args.push('-c:v', 'libx264', '-preset', quality.preset, '-crf', quality.mp4Crf, '-movflags', '+faststart');
+    args.push('-c:v', 'libx264', '-preset', quality.preset, '-crf', quality.mp4Crf, '-keyint_min', String(job.settings.fps), '-sc_threshold', '0', '-movflags', '+faststart');
   }
 
   args.push(job.outputPath);
