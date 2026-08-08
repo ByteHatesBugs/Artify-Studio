@@ -1,6 +1,6 @@
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, Check, ChevronUp, CirclePlay, Download, Film, History, Inbox, LoaderCircle, Pencil, RotateCcw, Search, Square, Trash2, X } from 'lucide-react';
-import { batchDownloadUrl, jobAudioPreviewUrl, jobDownloadUrl, jobPreviewUrl } from '../api';
+import { batchDownloadUrl, jobDownloadUrl, jobPreviewUrl } from '../api';
 import type { Batch, JobStatus, RenderJob } from '../types';
 
 const VideoReview = lazy(() => import('./VideoReview').then((module) => ({ default: module.VideoReview })));
@@ -205,7 +205,6 @@ export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onRen
                         <Suspense fallback={<div className="panel-loading"><span className="spinner" /> Loading editor…</div>}>
                           <RenderedVideoEditor
                             job={job}
-                            audioSource={job.audioName ? jobAudioPreviewUrl(batch.id, job.id) : undefined}
                             busy={busy}
                             onRename={(outputName) => onRenameJob(batch.id, job.id, outputName)}
                             onRerender={(outputName, settings) => onRerenderJob(batch.id, job.id, outputName, settings)}
