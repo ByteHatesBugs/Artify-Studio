@@ -17,6 +17,10 @@ const settings: RenderJob['settings'] = {
   quality: 'balanced',
   fade: true,
   background: '#09090b',
+  effects: [
+    { motion: 'zoom-in', focus: 'center', effectStart: 0, effectEnd: 2.5 },
+    { motion: 'pan-right', focus: 'center', effectStart: 2.5, effectEnd: 5 },
+  ],
 };
 
 describe('VideoReview', () => {
@@ -28,6 +32,7 @@ describe('VideoReview', () => {
     expect(screen.getByRole('slider', { name: 'Seek through preview' })).toBeTruthy();
     expect(screen.getByRole('combobox', { name: 'Playback speed' })).toBeTruthy();
     expect(screen.getByText('campaign.mp4')).toBeTruthy();
-    expect(screen.getByText(/zoom in · center focus/i)).toBeTruthy();
+    expect(screen.getByText(/2 effects · full-canvas output/i)).toBeTruthy();
+    expect(container.querySelectorAll('.clip-effect')).toHaveLength(2);
   });
 });
