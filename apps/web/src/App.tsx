@@ -202,7 +202,9 @@ export default function App() {
     const effects = normalizeEffectStack(next.effects, next.duration);
     const primary = effects[0]!;
     const normalizedNext = { ...next, fit: 'cover' as const, effects, motion: primary.motion, focus: primary.focus, effectStart: primary.effectStart, effectEnd: primary.effectEnd };
+    const durationChanged = normalizedNext.duration !== settings.duration;
     setSettings(normalizedNext);
+    if (!durationChanged) return;
     setImages((current) => current.map((image) => {
       if (!image.effectOverride) return image;
       return { ...image, effectOverride: { effects: normalizeEffectStack(image.effectOverride.effects, normalizedNext.duration, primary) } };
