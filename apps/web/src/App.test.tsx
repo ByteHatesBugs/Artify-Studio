@@ -20,6 +20,7 @@ describe('RenderFlow', () => {
     render(<App />);
     expect(screen.getByRole('heading', { name: /still images/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /upload images/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /add soundtrack/i })).toBeTruthy();
     const campaignProfile = screen.getByRole('button', { name: /campaign full hd/i });
     expect(campaignProfile.getAttribute('aria-pressed')).toBe('false');
     fireEvent.click(campaignProfile);
