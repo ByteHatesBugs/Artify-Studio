@@ -2,7 +2,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { config } from './config.js';
 import type { EffectSegment, RenderJob, RenderSettings, Resolution } from './types.js';
 
-const dimensions: Record<Resolution, [number, number]> = {
+export const dimensions: Record<Resolution, [number, number]> = {
   '480p': [854, 480],
   '720p': [1280, 720],
   '1080p': [1920, 1080],
@@ -109,7 +109,7 @@ export const buildVideoFilter = (settings: RenderSettings) => {
     ? `,fade=t=in:st=0:d=${fadeDuration},fade=t=out:st=${Math.max(0, settings.duration - fadeDuration)}:d=${fadeDuration}`
     : '';
 
-  if (effects.every((effect) => effect.motion === 'still')) return `${base}${fades},format=yuv420p`;
+  if (effects.every((effect) => effect.motion === 'still')) return `${base}${fades},setsar=1,format=yuv420p`;
 
   const transitions = effects.map((effect) => {
     const from = initialMotionState(effect);
@@ -207,3 +207,80 @@ export const renderImage = (job: RenderJob, onProgress: (progress: number) => vo
 
   return { process: child, completion };
 };
+
+interface ProbeStream {
+  codec_type?: string;
+  width?: number;
+  height?: number;
+  avg_frame_rate?: string;
+  sample_aspect_ratio?: string;
+  nb_read_frames?: string;
+}
+
+export interface RenderProbe {
+  streams?: ProbeStream[];
+  format?: { duration?: string };
+}
+
+const parseRate = (rate = '') => {
+  const parts = rate.split('/');
+  const numerator = Number(parts[0]);
+  const denominator = Number(parts[1] ?? 1);
+  return Number.isFinite(numerator) && Number.isFinite(denominator) && denominator !== 0 ? numerator / denominator : Number.NaN;
+};
+
+export const validateRenderProbe = (probe: RenderProbe, settings: RenderSettings) => {
+  const video = probe.streams?.find((stream) => stream.codec_type === 'video');
+  const hasAudio = probe.streams?.some((stream) => stream.codec_type === 'audio');
+  const [expectedWidth, expectedHeight] = dimensions[settings.resolution];
+  const actualDuration = Number(probe.format?.duration);
+  const actualFps = parseRate(video?.avg_frame_rate);
+  const actualFrames = Number(video?.nb_read_frames);
+  const expectedFrames = Math.ceil(settings.duration * settings.fps);
+  const durationTolerance = Math.max(0.05, 2 / settings.fps);
+  const problems: string[] = [];
+
+  if (!video) problems.push('no video stream');
+  else {
+    if (video.width !== expectedWidth || video.height !== expectedHeight) problems.push(`canvas is ${video.width ?? '?'}x${video.height ?? '?'} instead of ${expectedWidth}x${expectedHeight}`);
+    if (!Number.isFinite(actualFps) || Math.abs(actualFps - settings.fps) > 0.01) problems.push(`frame rate is ${Number.isFinite(actualFps) ? actualFps : 'unknown'} instead of ${settings.fps} FPS`);
+    if (video.sample_aspect_ratio !== '1:1') problems.push(`pixel aspect ratio is ${video.sample_aspect_ratio ?? 'unknown'} instead of 1:1`);
+    if (Number.isFinite(actualFrames) && Math.abs(actualFrames - expectedFrames) > 1) problems.push(`frame count is ${actualFrames} instead of ${expectedFrames}`);
+  }
+  if (!Number.isFinite(actualDuration) || Math.abs(actualDuration - settings.duration) > durationTolerance) problems.push(`duration is ${Number.isFinite(actualDuration) ? actualDuration : 'unknown'}s instead of ${settings.duration}s`);
+  if (hasAudio) problems.push('an audio stream is present');
+  if (problems.length) throw new Error(`Rendered video did not meet its requirements: ${problems.join('; ')}.`);
+};
+
+export const verifyRender = (outputPath: string, settings: RenderSettings) => new Promise<void>((resolve, reject) => {
+  const probe = spawn(config.ffprobePath, [
+    '-v', 'error', '-count_frames', '-show_entries',
+    'stream=codec_type,width,height,avg_frame_rate,sample_aspect_ratio,nb_read_frames:format=duration',
+    '-of', 'json', outputPath,
+  ], { windowsHide: true });
+  let stdout = '';
+  let stderr = '';
+  let settled = false;
+  const finish = (error?: Error) => {
+    if (settled) return;
+    settled = true;
+    clearTimeout(timeout);
+    if (error) reject(error); else resolve();
+  };
+  const timeout = setTimeout(() => {
+    probe.kill('SIGTERM');
+    finish(new Error('Rendered video verification timed out.'));
+  }, 15000);
+  probe.stdout.on('data', (chunk: Buffer) => { stdout += chunk.toString(); });
+  probe.stderr.on('data', (chunk: Buffer) => { stderr = `${stderr}${chunk.toString()}`.slice(-2000); });
+  probe.once('error', (error) => finish(new Error(`Could not start FFprobe: ${error.message}`)));
+  probe.once('close', (code) => {
+    if (code !== 0) return finish(new Error(stderr.trim() || `FFprobe exited with code ${code ?? 'unknown'}.`));
+    try {
+      validateRenderProbe(JSON.parse(stdout) as RenderProbe, settings);
+      finish();
+    } catch (error) {
+      finish(error instanceof Error ? error : new Error('Rendered video verification failed.'));
+    }
+  });
+});
