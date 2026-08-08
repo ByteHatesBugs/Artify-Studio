@@ -176,13 +176,14 @@ main { max-width: 1320px; margin: 0 auto; padding: 0 28px 100px; }
 .effect-stack-heading > button { height: 29px; padding: 0 8px; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(200,255,61,.24); border-radius: 7px; color: var(--accent); background: var(--accent-soft); font-size: 8px; font-weight: 700; cursor: pointer; }
 .effect-stack-heading > button:disabled { opacity: .4; }
 .effect-stack-track { height: 25px; position: relative; overflow: hidden; margin: 11px 0; border: 1px solid var(--line); border-radius: 6px; background: #17171a; }
-.effect-stack-track > span { height: 100%; position: absolute; top: 0; display: grid; place-items: center; border-right: 2px solid #0c0c0e; opacity: .9; }
+.effect-stack-track > span { height: 16px; position: absolute; display: grid; place-items: center; border-radius: 4px; box-shadow: 0 1px 5px rgba(0,0,0,.24); opacity: .9; }
 .effect-stack-track i { color: #111; font-size: 7px; font-style: normal; font-weight: 900; }
 .effect-stack-list { display: grid; gap: 7px; }
 .effect-segment { position: relative; padding: 9px; display: grid; grid-template-columns: 1fr 1fr; gap: 7px; border: 1px solid var(--line); border-radius: 8px; background: #111114; }
 .effect-segment-index { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; }
 .effect-segment-index > span { width: 19px; height: 19px; display: grid; place-items: center; border-radius: 5px; color: #111; font-size: 8px; font-weight: 900; }
 .effect-segment-index strong { font-size: 9px; }
+.effect-segment-index small { margin-left: auto; margin-right: 24px; color: #77767b; font-size: 7px; text-transform: uppercase; letter-spacing: .45px; }
 .effect-segment > label > span, .effect-time-fields > span { height: 20px; display: flex; align-items: center; gap: 4px; color: #747378; font-size: 7px; text-transform: uppercase; letter-spacing: .4px; }
 .effect-segment select { width: 100%; height: 32px; padding: 0 7px; border: 1px solid var(--line); border-radius: 7px; color: #ddd; background: #0b0b0d; font-size: 8px; }
 .effect-segment > .effect-strength { grid-column: 1 / -1; padding: 7px 8px; border: 1px solid var(--line); border-radius: 7px; background: #0b0b0d; }
