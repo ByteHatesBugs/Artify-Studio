@@ -1,5 +1,5 @@
 {
-  description = "Artify Studio development environment";
+  description = "RenderFlow development environment";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -31,7 +31,7 @@
             FFMPEG_PATH = "${pkgs.ffmpeg}/bin/ffmpeg";
 
             shellHook = ''
-              echo "Artify Studio environment ready"
+              echo "RenderFlow environment ready"
               echo "Bun: $(bun --version) | FFmpeg: $(ffmpeg -version | head -n 1)"
             '';
           };
