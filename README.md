@@ -121,7 +121,7 @@ Run the same verification used by development before handing a build to a NixOS 
 nix develop --command bash -lc 'bun install --frozen-lockfile && bun run check && bun run test && bun run build'
 ```
 
-All runtime paths are resolved with Node's cross-platform path utilities, and FFmpeg is read from `FFMPEG_PATH`; the flake sets that variable to the Nix store executable automatically.
+All runtime paths are resolved with Node's cross-platform path utilities. FFmpeg and FFprobe are read from `FFMPEG_PATH` and `FFPROBE_PATH`; the flake sets both variables to Nix store executables automatically.
 
 For a production-like run:
 
@@ -157,6 +157,7 @@ Then open `http://localhost:8787`.
 | `PORT` | `8787` | API and production web server port |
 | `CLIENT_ORIGIN` | `http://localhost:5173` | Allowed development web origin |
 | `FFMPEG_PATH` | `ffmpeg` | FFmpeg executable path |
+| `FFPROBE_PATH` | `ffprobe` | FFprobe executable used to verify every completed render |
 | `STORAGE_DIR` | `./storage` | Runtime media directory |
 | `MAX_FILE_SIZE_MB` | `25` | Maximum size of one source image |
 | `MAX_BATCH_SIZE` | `50` | Maximum images accepted in one request |
