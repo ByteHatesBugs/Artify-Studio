@@ -16,29 +16,35 @@ class MediaEngine {
   }
 
   async check() {
-    this.status = await new Promise<EngineStatus>((resolve) => {
-      const process = spawn(config.ffmpegPath, ['-version'], { windowsHide: true });
+    const checkExecutable = (executable: string, label: string) => new Promise<{ version?: string; error?: string }>((resolve) => {
+      const process = spawn(executable, ['-version'], { windowsHide: true });
       let output = '';
       let settled = false;
-      const finish = (status: EngineStatus) => {
+      const finish = (result: { version?: string; error?: string }) => {
         if (settled) return;
         settled = true;
         clearTimeout(timeout);
-        resolve(status);
+        resolve(result);
       };
       const timeout = setTimeout(() => {
         process.kill('SIGTERM');
-        finish({ ready: false, error: 'FFmpeg did not respond within 5 seconds.', checkedAt: new Date().toISOString() });
+        finish({ error: `${label} did not respond within 5 seconds.` });
       }, 5000);
       process.stdout.on('data', (chunk: Buffer) => { output += chunk.toString(); });
-      process.once('error', (error) => finish({ ready: false, error: error.message, checkedAt: new Date().toISOString() }));
+      process.once('error', (error) => finish({ error: `${label}: ${error.message}` }));
       process.once('close', (code) => {
         const version = output.split(/\r?\n/)[0]?.replace(/^ffmpeg version\s+/i, '') || undefined;
-        finish(code === 0
-          ? { ready: true, version, checkedAt: new Date().toISOString() }
-          : { ready: false, error: `FFmpeg exited with code ${code ?? 'unknown'}.`, checkedAt: new Date().toISOString() });
+        finish(code === 0 ? { version } : { error: `${label} exited with code ${code ?? 'unknown'}.` });
       });
     });
+
+    const [ffmpeg, ffprobe] = await Promise.all([
+      checkExecutable(config.ffmpegPath, 'FFmpeg'),
+      checkExecutable(config.ffprobePath, 'FFprobe'),
+    ]);
+    this.status = ffmpeg.error || ffprobe.error
+      ? { ready: false, error: ffmpeg.error ?? ffprobe.error, checkedAt: new Date().toISOString() }
+      : { ready: true, version: ffmpeg.version, checkedAt: new Date().toISOString() };
     return this.status;
   }
 }
