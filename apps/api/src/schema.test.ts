@@ -15,6 +15,7 @@ const validSettings = {
   quality: 'balanced',
   fade: 'true',
   background: '#09090b',
+  audioVolume: '0.8',
 };
 
 describe('render settings validation', () => {
@@ -82,5 +83,12 @@ describe('render settings validation', () => {
     const tooLong = createBatchSchema.safeParse({ ...validSettings, duration: '61', effectEnd: '61' });
     expect(minute.success).toBe(true);
     expect(tooLong.success).toBe(false);
+  });
+
+  it('accepts standard social and high-resolution canvases with a safe audio mix', () => {
+    for (const resolution of ['480p', '1440p', '4k', 'square-720', 'portrait-720', 'feed-portrait']) {
+      expect(createBatchSchema.safeParse({ ...validSettings, resolution, audioVolume: '0.65' }).success).toBe(true);
+    }
+    expect(createBatchSchema.safeParse({ ...validSettings, audioVolume: '1.1' }).success).toBe(false);
   });
 });
