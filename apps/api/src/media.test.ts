@@ -23,11 +23,13 @@ describe('media command construction', () => {
   it('creates a padded 1080p zoom filter', () => {
     const filter = buildVideoFilter(settings);
     expect(filter).toContain('scale=2880:1620');
-    expect(filter).toContain('flags=lanczos');
+    expect(filter).toContain('flags=lanczos+accurate_rnd');
+    expect(filter).toContain('s=2880x1620');
+    expect(filter).toContain('scale=1920:1080:flags=lanczos+accurate_rnd');
     expect(filter).toContain('setsar=1');
     expect(filter).toContain('zoompan');
     expect(filter).toContain('clip((on-30)/90,0,1)');
-    expect(filter).toContain('3-2*');
+    expect(filter).toContain('*6-15)+10');
     expect(filter).toContain('fps=30');
     expect(filter).toContain('fade=t=in');
   });
@@ -104,5 +106,13 @@ describe('media command construction', () => {
     const strong = buildVideoFilter({ ...settings, effects: [{ ...settings.effects[0]!, strength: 100 }] });
     expect(subtle).toContain('1.03');
     expect(strong).toContain('1.12');
+  });
+
+  it('supports smooth vertical and diagonal motion paths', () => {
+    const vertical = buildVideoFilter({ ...settings, effects: [{ ...settings.effects[0]!, motion: 'pan-up' }] });
+    const diagonal = buildVideoFilter({ ...settings, effects: [{ ...settings.effects[0]!, motion: 'drift-down-right' }] });
+    expect(vertical).toContain("y='(ih-ih/zoom)*(if(between(on,30,120),0.75+");
+    expect(diagonal).toContain("x='(iw-iw/zoom)*(if(between(on,30,120),0.25+");
+    expect(diagonal).toContain("y='(ih-ih/zoom)*(if(between(on,30,120),0.25+");
   });
 });
