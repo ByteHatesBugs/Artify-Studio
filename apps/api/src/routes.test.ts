@@ -26,7 +26,7 @@ const { apiRouter } = await import('./routes.js');
 
 const settings: RenderJob['settings'] = {
   duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'zoom-in', focus: 'center',
-  format: 'mp4', fit: 'cover', quality: 'balanced', fade: true, background: '#09090b',
+  format: 'mp4', fit: 'cover', quality: 'balanced', fade: true, background: '#09090b', audioVolume: 0.8,
   effects: [{ motion: 'zoom-in', focus: 'center', effectStart: 0, effectEnd: 5 }],
 };
 
@@ -54,12 +54,13 @@ describe('completed render editing routes', () => {
   });
 
   it('queues a safe replacement while retaining the previous output', async () => {
-    const updatedSettings = { ...settings, duration: 60, effectEnd: 60, effects: [{ ...settings.effects[0]!, effectEnd: 60 }] };
+    const updatedSettings = { ...settings, fit: 'contain' as const, duration: 60, effectEnd: 60, effects: [{ ...settings.effects[0]!, effectEnd: 60 }] };
     const response = await request(app).post('/api/batches/batch-1/jobs/job-1/rerender').send({ outputName: 'launch updated', settings: updatedSettings });
     expect(response.status).toBe(202);
     expect(job.status).toBe('queued');
     expect(job.supersededOutputPath).toBe('working.mp4');
     expect(job.outputName).toBe('launch-updated.mp4');
+    expect(job.settings.fit).toBe('cover');
     expect(mocks.enqueue).toHaveBeenCalledWith('batch-1', [job]);
   });
 });
