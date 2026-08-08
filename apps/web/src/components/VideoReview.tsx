@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { FastForward, Maximize2, Pause, Play, Rewind, Volume2, VolumeX } from 'lucide-react';
+import { FastForward, Maximize2, Minimize2, Pause, Play, Rewind, Volume2, VolumeX } from 'lucide-react';
 import type { RenderJob } from '../types';
 import { resolutionAspect } from '../resolutionOptions';
 
@@ -23,7 +23,7 @@ const aspectClass = (resolution: RenderJob['settings']['resolution']) => {
 
 export function VideoReview({ source, outputName, settings }: VideoReviewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
+  const reviewRef = useRef<HTMLDivElement>(null);
   const [duration, setDuration] = useState(settings.duration);
   const [currentTime, setCurrentTime] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -31,6 +31,13 @@ export function VideoReview({ source, outputName, settings }: VideoReviewProps) 
   const [volume, setVolume] = useState(1);
   const [rate, setRate] = useState(1);
   const [buffered, setBuffered] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(document.fullscreenElement === reviewRef.current);
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    return () => document.removeEventListener('fullscreenchange', syncFullscreen);
+  }, []);
 
   useEffect(() => {
     if (!playing) return;
@@ -84,7 +91,7 @@ export function VideoReview({ source, outputName, settings }: VideoReviewProps) 
 
   const toggleFullscreen = async () => {
     if (document.fullscreenElement) await document.exitFullscreen();
-    else await stageRef.current?.requestFullscreen();
+    else await reviewRef.current?.requestFullscreen();
   };
 
   const handleKeys = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -106,14 +113,14 @@ export function VideoReview({ source, outputName, settings }: VideoReviewProps) 
   const rulerMarks = Array.from({ length: 6 }, (_, index) => (duration / 5) * index);
 
   return (
-    <div className="video-review" tabIndex={0} onKeyDown={handleKeys}>
+    <div ref={reviewRef} className="video-review" tabIndex={0} onKeyDown={handleKeys}>
       <div className="video-review-heading">
         <div><strong>Video review</strong><span>Preview the final timing and motion before download</span></div>
         <span>Full canvas · {settings.resolution} · {settings.format.toUpperCase()} · {settings.fps} FPS</span>
       </div>
 
       <div className="video-stage-shell">
-        <div ref={stageRef} className={`video-stage ${aspectClass(settings.resolution)}`}>
+        <div className={`video-stage ${aspectClass(settings.resolution)}`} onDoubleClick={() => void toggleFullscreen()}>
           <video
             ref={videoRef}
             playsInline
@@ -154,7 +161,7 @@ export function VideoReview({ source, outputName, settings }: VideoReviewProps) 
           <select aria-label="Playback speed" value={rate} onChange={(event) => changeRate(Number(event.target.value))}>
             <option value={0.5}>0.5×</option><option value={0.75}>0.75×</option><option value={1}>1×</option><option value={1.25}>1.25×</option><option value={1.5}>1.5×</option><option value={2}>2×</option>
           </select>
-          <button type="button" aria-label="Toggle fullscreen preview" onClick={() => void toggleFullscreen()}><Maximize2 size={15} /></button>
+          <button type="button" aria-label={isFullscreen ? 'Exit fullscreen preview' : 'Open fullscreen preview'} onClick={() => void toggleFullscreen()}>{isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}</button>
         </div>
       </div>
 
