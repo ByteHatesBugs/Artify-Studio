@@ -36,29 +36,27 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
   useEffect(() => {
     const element = previewRef.current;
     if (!element || !previewImage) return;
-    const transformsFor = (effect: RenderSettings['effects'][number]): [string, string] => {
+    const transformsFor = (effect: RenderSettings['effects'][number], progress: number) => {
       const ratio = (effect.strength ?? 50) / 100;
       const scale = 1 + 0.12 * ratio;
       const travel = 6 * ratio;
-      if (effect.motion === 'zoom-in') return ['scale(1)', `scale(${scale})`];
-      if (effect.motion === 'zoom-out') return [`scale(${scale})`, 'scale(1)'];
-      if (effect.motion === 'pan-left') return [`scale(${scale}) translateX(${travel}%)`, `scale(${scale}) translateX(-${travel}%)`];
-      if (effect.motion === 'pan-right') return [`scale(${scale}) translateX(-${travel}%)`, `scale(${scale}) translateX(${travel}%)`];
-      return ['scale(1)', 'scale(1)'];
+      const eased = progress * progress * (3 - 2 * progress);
+      if (effect.motion === 'zoom-in') return `scale(${1 + (scale - 1) * eased})`;
+      if (effect.motion === 'zoom-out') return `scale(${scale - (scale - 1) * eased})`;
+      if (effect.motion === 'pan-left') return `scale(${scale}) translateX(${travel - travel * 2 * eased}%)`;
+      if (effect.motion === 'pan-right') return `scale(${scale}) translateX(${-travel + travel * 2 * eased}%)`;
+      return 'scale(1)';
     };
-    let currentTransform = transformsFor(settings.effects[0]!)[0];
-    let currentOffset = 0;
-    const keyframes: Keyframe[] = [{ transform: currentTransform, offset: 0 }];
-    settings.effects.forEach((effect) => {
-      const startOffset = effect.effectStart / settings.duration;
-      const endOffset = effect.effectEnd / settings.duration;
-      if (startOffset > currentOffset) keyframes.push({ transform: currentTransform, offset: startOffset });
-      currentTransform = transformsFor(effect)[1];
-      keyframes.push({ transform: currentTransform, offset: endOffset, easing: 'ease-in-out' });
-      currentOffset = endOffset;
+    const keyframes: Keyframe[] = Array.from({ length: 121 }, (_, index) => {
+      const offset = index / 120;
+      const time = offset * settings.duration;
+      const active = settings.effects.find((effect) => time >= effect.effectStart && time <= effect.effectEnd);
+      const completed = [...settings.effects].filter((effect) => effect.effectEnd < time).sort((left, right) => right.effectEnd - left.effectEnd)[0];
+      const effect = active ?? completed;
+      const progress = !effect ? 0 : active ? Math.max(0, Math.min(1, (time - effect.effectStart) / (effect.effectEnd - effect.effectStart))) : 1;
+      return { transform: effect ? transformsFor(effect, progress) : 'scale(1)', offset };
     });
-    if (currentOffset < 1) keyframes.push({ transform: currentTransform, offset: 1 });
-    const motionAnimation = element.animate(keyframes, { duration: settings.duration * 1000, iterations: Infinity, direction: 'alternate', easing: 'linear' });
+    const motionAnimation = element.animate(keyframes, { duration: settings.duration * 1000, iterations: Infinity, easing: 'linear' });
     const fadeDuration = Math.min(0.5, settings.duration / 4) / settings.duration;
     const fadeAnimation = settings.fade ? element.animate([
       { opacity: 0, offset: 0 },
@@ -73,10 +71,10 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
   }, [previewImage, settings.duration, settings.effects, settings.fade]);
 
   const changeDuration = (duration: number) => {
-    const effects = settings.effects.map((effect, index) => ({
+    const effects = settings.effects.map((effect) => ({
       ...effect,
       effectStart: Number(((effect.effectStart / settings.duration) * duration).toFixed(2)),
-      effectEnd: Number((index === settings.effects.length - 1 ? duration : (effect.effectEnd / settings.duration) * duration).toFixed(2)),
+      effectEnd: Number(((effect.effectEnd / settings.duration) * duration).toFixed(2)),
     }));
     const primary = effects[0]!;
     onChange({ ...settings, duration, effects, motion: primary.motion, focus: primary.focus, effectStart: primary.effectStart, effectEnd: primary.effectEnd });
