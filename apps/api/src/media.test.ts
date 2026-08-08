@@ -16,13 +16,15 @@ const settings: RenderSettings = {
   fade: true,
   background: '#09090b',
   audioVolume: 0.8,
-  effects: [{ motion: 'zoom-in', focus: 'center', effectStart: 1, effectEnd: 4 }],
+  effects: [{ motion: 'zoom-in', focus: 'center', strength: 50, effectStart: 1, effectEnd: 4 }],
 };
 
 describe('media command construction', () => {
   it('creates a padded 1080p zoom filter', () => {
     const filter = buildVideoFilter(settings);
-    expect(filter).toContain('scale=2152:1210');
+    expect(filter).toContain('scale=2880:1620');
+    expect(filter).toContain('flags=lanczos');
+    expect(filter).toContain('setsar=1');
     expect(filter).toContain('zoompan');
     expect(filter).toContain('clip((on-30)/90,0,1)');
     expect(filter).toContain('3-2*');
@@ -31,10 +33,10 @@ describe('media command construction', () => {
   });
 
   it('holds motion outside the selected effect window', () => {
-    const filter = buildVideoFilter({ ...settings, fps: 24, effectStart: 1.5, effectEnd: 3.5, motion: 'pan-right', effects: [{ motion: 'pan-right', focus: 'center', effectStart: 1.5, effectEnd: 3.5 }] });
+    const filter = buildVideoFilter({ ...settings, fps: 24, effectStart: 1.5, effectEnd: 3.5, motion: 'pan-right', effects: [{ motion: 'pan-right', focus: 'center', strength: 50, effectStart: 1.5, effectEnd: 3.5 }] });
     expect(filter).toContain('clip((on-36)/48,0,1)');
     expect(filter).toContain("x='(iw-iw/zoom)*(if(lt(on,36)");
-    expect(filter).toContain("z='if(lt(on,36),1.08");
+    expect(filter).toContain("z='if(lt(on,36),1.06");
   });
 
   it('passes file paths as separate process arguments', () => {
@@ -59,14 +61,14 @@ describe('media command construction', () => {
   });
 
   it('supports edge-to-edge framing without transitions', () => {
-    const filter = buildVideoFilter({ ...settings, fit: 'cover', fade: false, motion: 'still', effects: [{ motion: 'still', focus: 'center', effectStart: 0, effectEnd: 5 }] });
+    const filter = buildVideoFilter({ ...settings, fit: 'cover', fade: false, motion: 'still', effects: [{ motion: 'still', focus: 'center', strength: 0, effectStart: 0, effectEnd: 5 }] });
     expect(filter).toContain('force_original_aspect_ratio=increase');
     expect(filter).toContain('crop=1920:1080:(iw-ow)/2:(ih-oh)/2');
     expect(filter).not.toContain('fade=');
   });
 
   it('anchors zoom motion at the selected focal placement', () => {
-    const filter = buildVideoFilter({ ...settings, focus: 'bottom', effects: [{ motion: 'zoom-in', focus: 'bottom', effectStart: 1, effectEnd: 4 }] });
+    const filter = buildVideoFilter({ ...settings, focus: 'bottom', effects: [{ motion: 'zoom-in', focus: 'bottom', strength: 50, effectStart: 1, effectEnd: 4 }] });
     expect(filter).toContain("y='(ih-ih/zoom)*(if(lt(on,30),1");
   });
 
@@ -74,12 +76,19 @@ describe('media command construction', () => {
     const filter = buildVideoFilter({
       ...settings,
       effects: [
-        { motion: 'zoom-in', focus: 'center', effectStart: 0, effectEnd: 2 },
-        { motion: 'pan-right', focus: 'center', effectStart: 2, effectEnd: 5 },
+        { motion: 'zoom-in', focus: 'center', strength: 35, effectStart: 0, effectEnd: 2 },
+        { motion: 'pan-right', focus: 'center', strength: 70, effectStart: 2, effectEnd: 5 },
       ],
     });
     expect(filter).toContain('clip((on-0)/60,0,1)');
     expect(filter).toContain('clip((on-60)/90,0,1)');
     expect(filter).toContain('if(lt(on,60)');
+  });
+
+  it('maps effect strength to subtle and strong motion amplitudes', () => {
+    const subtle = buildVideoFilter({ ...settings, effects: [{ ...settings.effects[0]!, strength: 25 }] });
+    const strong = buildVideoFilter({ ...settings, effects: [{ ...settings.effects[0]!, strength: 100 }] });
+    expect(subtle).toContain('1.03');
+    expect(strong).toContain('1.12');
   });
 });
