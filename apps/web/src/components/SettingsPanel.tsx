@@ -16,9 +16,9 @@ interface SettingsPanelProps {
 }
 
 const profiles: Array<{ label: string; detail: string; settings: Partial<RenderSettings> }> = [
-  { label: 'Campaign', detail: 'Full HD · MP4', settings: { resolution: '1080p', format: 'mp4', motion: 'zoom-in', focus: 'center', duration: 5, effectStart: 0, effectEnd: 5, effects: [{ motion: 'zoom-in', focus: 'center', effectStart: 0, effectEnd: 5 }], fps: 30, fit: 'cover', quality: 'high', fade: true } },
-  { label: 'Social', detail: 'Portrait · MP4', settings: { resolution: 'portrait', format: 'mp4', motion: 'zoom-in', focus: 'center', duration: 5, effectStart: 0.5, effectEnd: 4.5, effects: [{ motion: 'zoom-in', focus: 'center', effectStart: 0.5, effectEnd: 4.5 }], fps: 30, fit: 'cover', quality: 'balanced', fade: true } },
-  { label: 'Lightweight', detail: 'HD · WebM', settings: { resolution: '720p', format: 'webm', motion: 'still', focus: 'center', duration: 3, effectStart: 0, effectEnd: 3, effects: [{ motion: 'still', focus: 'center', effectStart: 0, effectEnd: 3 }], fps: 24, fit: 'cover', quality: 'draft', fade: false } },
+  { label: 'Campaign', detail: 'Full HD · MP4', settings: { resolution: '1080p', format: 'mp4', motion: 'zoom-in', focus: 'center', duration: 5, effectStart: 0, effectEnd: 5, effects: [{ motion: 'zoom-in', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 }], fps: 30, fit: 'cover', quality: 'high', fade: true } },
+  { label: 'Social', detail: 'Portrait · MP4', settings: { resolution: 'portrait', format: 'mp4', motion: 'zoom-in', focus: 'center', duration: 5, effectStart: 0.5, effectEnd: 4.5, effects: [{ motion: 'zoom-in', focus: 'center', strength: 45, effectStart: 0.5, effectEnd: 4.5 }], fps: 30, fit: 'cover', quality: 'balanced', fade: true } },
+  { label: 'Lightweight', detail: 'HD · WebM', settings: { resolution: '720p', format: 'webm', motion: 'still', focus: 'center', duration: 3, effectStart: 0, effectEnd: 3, effects: [{ motion: 'still', focus: 'center', strength: 0, effectStart: 0, effectEnd: 3 }], fps: 24, fit: 'cover', quality: 'draft', fade: false } },
 ];
 
 export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting, engineReady, onChange, onReset, onSubmit }: SettingsPanelProps) {
@@ -36,21 +36,24 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
   useEffect(() => {
     const element = previewRef.current;
     if (!element || !previewImage) return;
-    const transforms: Record<RenderSettings['motion'], [string, string]> = {
-      'zoom-in': ['scale(1)', 'scale(1.08)'],
-      'zoom-out': ['scale(1.08)', 'scale(1)'],
-      'pan-left': ['scale(1.08) translateX(3%)', 'scale(1.08) translateX(-3%)'],
-      'pan-right': ['scale(1.08) translateX(-3%)', 'scale(1.08) translateX(3%)'],
-      still: ['scale(1)', 'scale(1)'],
+    const transformsFor = (effect: RenderSettings['effects'][number]): [string, string] => {
+      const ratio = (effect.strength ?? 50) / 100;
+      const scale = 1 + 0.12 * ratio;
+      const travel = 6 * ratio;
+      if (effect.motion === 'zoom-in') return ['scale(1)', `scale(${scale})`];
+      if (effect.motion === 'zoom-out') return [`scale(${scale})`, 'scale(1)'];
+      if (effect.motion === 'pan-left') return [`scale(${scale}) translateX(${travel}%)`, `scale(${scale}) translateX(-${travel}%)`];
+      if (effect.motion === 'pan-right') return [`scale(${scale}) translateX(-${travel}%)`, `scale(${scale}) translateX(${travel}%)`];
+      return ['scale(1)', 'scale(1)'];
     };
-    let currentTransform = transforms[settings.effects[0]!.motion][0];
+    let currentTransform = transformsFor(settings.effects[0]!)[0];
     let currentOffset = 0;
     const keyframes: Keyframe[] = [{ transform: currentTransform, offset: 0 }];
     settings.effects.forEach((effect) => {
       const startOffset = effect.effectStart / settings.duration;
       const endOffset = effect.effectEnd / settings.duration;
       if (startOffset > currentOffset) keyframes.push({ transform: currentTransform, offset: startOffset });
-      currentTransform = transforms[effect.motion][1];
+      currentTransform = transformsFor(effect)[1];
       keyframes.push({ transform: currentTransform, offset: endOffset, easing: 'ease-in-out' });
       currentOffset = endOffset;
     });
