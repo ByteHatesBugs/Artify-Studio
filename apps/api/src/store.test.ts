@@ -46,6 +46,8 @@ describe('BatchStore', () => {
     delete (legacyBatch.jobs[0]!.settings as Partial<typeof legacyBatch.jobs[0]['settings']>).audioVideoStart;
     delete (legacyBatch.settings.effects[0] as Partial<(typeof legacyBatch.settings.effects)[number]>).strength;
     delete (legacyBatch.jobs[0]!.settings.effects[0] as Partial<(typeof legacyBatch.settings.effects)[number]>).strength;
+    delete (legacyBatch.settings.effects[0] as Partial<(typeof legacyBatch.settings.effects)[number]>).easing;
+    delete (legacyBatch.jobs[0]!.settings.effects[0] as Partial<(typeof legacyBatch.settings.effects)[number]>).easing;
     first.create(legacyBatch);
     await first.flush();
 
@@ -54,6 +56,7 @@ describe('BatchStore', () => {
     expect(restored.get('batch-1')?.name).toBe('Persistence test');
     expect(restored.get('batch-1')?.jobs[0]?.attempts).toBe(1);
     expect(restored.get('batch-1')?.jobs[0]?.settings.effects[0]?.strength).toBe(50);
+    expect(restored.get('batch-1')?.jobs[0]?.settings.effects[0]?.easing).toBe('cinematic');
     expect(restored.get('batch-1')?.jobs[0]?.settings.audioSourceStart).toBe(0);
     expect(restored.get('batch-1')?.jobs[0]?.settings.audioVideoStart).toBe(0);
   });
