@@ -151,7 +151,6 @@ export const buildFfmpegArgs = (job: RenderJob) => {
   const args = [
     '-hide_banner', '-y', '-loop', '1', '-i', job.inputPath,
   ];
-  if (job.audioPath) args.push('-stream_loop', '-1', '-ss', String(job.settings.audioSourceStart ?? 0), '-i', job.audioPath);
   args.push(
     '-vf', buildVideoFilter(job.settings),
     '-t', String(job.settings.duration), '-r', String(job.settings.fps),
@@ -159,20 +158,12 @@ export const buildFfmpegArgs = (job: RenderJob) => {
     '-progress', 'pipe:1', '-nostats',
   );
 
-  if (job.audioPath) {
-    const audioVideoStart = Math.max(0, Math.min(job.settings.audioVideoStart ?? 0, job.settings.duration - 0.01));
-    const audioDuration = Math.max(0.01, job.settings.duration - audioVideoStart);
-    const delayMilliseconds = Math.round(audioVideoStart * 1000);
-    args.push('-map', '0:v:0', '-map', '1:a:0', '-af', `atrim=duration=${audioDuration},asetpts=PTS-STARTPTS,adelay=${delayMilliseconds}:all=1,volume=${job.settings.audioVolume}`, '-shortest');
-  }
-  else args.push('-an');
+  args.push('-an');
 
   if (job.settings.format === 'webm') {
     args.push('-c:v', 'libvpx-vp9', '-crf', quality.webmCrf, '-b:v', '0', '-cpu-used', quality.cpuUsed);
-    if (job.audioPath) args.push('-c:a', 'libopus', '-b:a', '160k');
   } else {
     args.push('-c:v', 'libx264', '-preset', quality.preset, '-crf', quality.mp4Crf, '-keyint_min', String(job.settings.fps), '-sc_threshold', '0', '-movflags', '+faststart');
-    if (job.audioPath) args.push('-c:a', 'aac', '-b:a', '192k');
   }
 
   args.push(job.outputPath);
