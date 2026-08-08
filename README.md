@@ -35,6 +35,8 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Responsive, keyboard-accessible interface
 - Locally bundled Inter and Manrope variable typography with no external font dependency
 - Searchable render history, live status counts, `/` search focus, and `Ctrl/Command + Enter` rendering
+- Persistent render searches with saved filters, recent terms, and live name suggestions
+- Waveform soundtrack trimming and precise placement on the video timeline, including completed-video edits
 - Lazy preview decoding and viewport-aware rendering for smooth large-batch editing
 - Lazy-loaded review/editor panels, deduplicated polling updates, deferred preference saves, and throttled preview updates
 - Automatic input cleanup and configurable output retention
