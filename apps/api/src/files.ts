@@ -49,9 +49,9 @@ export const removeBatchArchive = (batchId: string) => (
 );
 
 export const removeBatchFiles = async (batch: Batch) => {
-  const paths = [
-    ...batch.jobs.flatMap((job) => [job.inputPath, job.outputPath]),
+  const paths = new Set([
+    ...batch.jobs.flatMap((job) => [job.inputPath, job.outputPath, job.audioPath, job.supersededOutputPath].filter((filePath): filePath is string => Boolean(filePath))),
     path.join(storagePaths.archives, `${batch.id}.zip`),
-  ];
-  await Promise.all(paths.map((filePath) => rm(filePath, { force: true }).catch(() => undefined)));
+  ]);
+  await Promise.all([...paths].map((filePath) => rm(filePath, { force: true }).catch(() => undefined)));
 };
