@@ -40,6 +40,24 @@ export const retryBatch = async (id: string) => {
   return readJson<{ batch: Batch; retried: number }>(response);
 };
 
+export const renameRenderedJob = async (batchId: string, jobId: string, outputName: string) => {
+  const response = await fetch(`/api/batches/${batchId}/jobs/${jobId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ outputName }),
+  });
+  return readJson<{ batch: Batch }>(response);
+};
+
+export const rerenderJob = async (batchId: string, jobId: string, outputName: string, settings: Batch['jobs'][number]['settings']) => {
+  const response = await fetch(`/api/batches/${batchId}/jobs/${jobId}/rerender`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ outputName, settings }),
+  });
+  return readJson<{ batch: Batch }>(response);
+};
+
 export const deleteBatch = async (id: string) => {
   const response = await fetch(`/api/batches/${id}`, { method: 'DELETE' });
   if (!response.ok) await readJson(response);
