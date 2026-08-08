@@ -21,11 +21,14 @@ describe('RenderFlow', () => {
     expect(screen.getByRole('heading', { name: /still images/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /upload images/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /add soundtrack/i })).toBeTruthy();
+    expect(screen.getByRole('textbox', { name: /search render history/i })).toBeTruthy();
     const campaignProfile = screen.getByRole('button', { name: /campaign full hd/i });
     expect(campaignProfile.getAttribute('aria-pressed')).toBe('false');
     fireEvent.click(campaignProfile);
     expect(campaignProfile.getAttribute('aria-pressed')).toBe('true');
     expect(await screen.findByRole('button', { name: /render 0 videos/i })).toHaveProperty('disabled', true);
+    fireEvent.keyDown(window, { key: 'Enter', ctrlKey: true });
+    expect(vi.mocked(fetch).mock.calls.some(([, options]) => options?.method === 'POST')).toBe(false);
     expect(screen.getByRole('heading', { name: /your render queue is ready/i })).toBeTruthy();
   });
 });
