@@ -9,6 +9,7 @@ const settings: RenderSettings = {
   fps: 30,
   resolution: '1080p',
   motion: 'zoom-in',
+  focus: 'center',
   format: 'mp4',
   fit: 'contain',
   quality: 'balanced',
@@ -41,12 +42,19 @@ describe('media command construction', () => {
     expect(args.at(-1)).toBe('output video.mp4');
     expect(args).toContain('libx264');
     expect(args).toContain('22');
+    expect(args.slice(args.indexOf('-g'), args.indexOf('-g') + 2)).toEqual(['-g', '30']);
+    expect(args).toContain('+faststart');
   });
 
   it('supports edge-to-edge framing without transitions', () => {
     const filter = buildVideoFilter({ ...settings, fit: 'cover', fade: false, motion: 'still' });
     expect(filter).toContain('force_original_aspect_ratio=increase');
-    expect(filter).toContain('crop=1920:1080');
+    expect(filter).toContain('crop=1920:1080:(iw-ow)/2:(ih-oh)/2');
     expect(filter).not.toContain('fade=');
+  });
+
+  it('anchors zoom motion at the selected focal placement', () => {
+    const filter = buildVideoFilter({ ...settings, focus: 'bottom' });
+    expect(filter).toContain("y='(ih-ih/zoom)'");
   });
 });
