@@ -41,9 +41,6 @@ export interface RenderSettings {
   quality: QualityProfile;
   fade: boolean;
   background: string;
-  audioVolume: number;
-  audioSourceStart: number;
-  audioVideoStart: number;
   effects: EffectSegment[];
 }
 
