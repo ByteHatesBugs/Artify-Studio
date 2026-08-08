@@ -82,6 +82,15 @@ const easingExpression = (effect: EffectSegment, linear: string) => {
   return `(${linear})*(${linear})*(${linear})*(${linear}*((${linear})*6-15)+10)`;
 };
 
+const easingValue = (effect: EffectSegment, progress: number) => {
+  const safe = Math.max(0, Math.min(1, progress));
+  if (effect.easing === 'linear') return safe;
+  if (effect.easing === 'ease-in') return safe ** 3;
+  if (effect.easing === 'ease-out') return 1 - (1 - safe) ** 3;
+  if (effect.easing === 'ease-in-out') return safe * safe * (3 - 2 * safe);
+  return safe * safe * safe * (safe * (safe * 6 - 15) + 10);
+};
+
 export const buildVideoFilter = (settings: RenderSettings) => {
   const [width, height] = dimensions[settings.resolution];
   const frames = Math.ceil(settings.duration * settings.fps);
@@ -90,6 +99,7 @@ export const buildVideoFilter = (settings: RenderSettings) => {
     focus: settings.focus ?? 'center',
     strength: 50,
     easing: 'cinematic' as const,
+    speed: 1,
     effectStart: settings.effectStart,
     effectEnd: settings.effectEnd,
   }];
@@ -116,16 +126,24 @@ export const buildVideoFilter = (settings: RenderSettings) => {
     const to = targetMotionState(effect, from);
     const start = Math.round(effect.effectStart * settings.fps);
     const duration = Math.max(1, Math.round((effect.effectEnd - effect.effectStart) * settings.fps));
-    const linear = `clip((on-${start})/${duration},0,1)`;
+    const speed = Math.max(0.25, Math.min(3, effect.speed ?? 1));
+    const baseLinear = `clip((on-${start})/${duration},0,1)`;
+    const linear = speed === 1 ? baseLinear : `clip((${baseLinear})*${numberExpression(speed)},0,1)`;
     const progress = easingExpression(effect, linear);
-    return { start, end: start + duration, from, to, progress };
+    const settledProgress = easingValue(effect, speed);
+    const settled = {
+      zoom: from.zoom + (to.zoom - from.zoom) * settledProgress,
+      x: from.x + (to.x - from.x) * settledProgress,
+      y: from.y + (to.y - from.y) * settledProgress,
+    };
+    return { start, end: start + duration, from, to, settled, progress };
   });
 
   const propertyExpression = (property: keyof MotionState) => {
     const neutral: MotionState = { zoom: 1, ...focusPosition(effects[0]!.focus) };
     let expression = numberExpression(neutral[property]);
     for (const transition of [...transitions].sort((left, right) => left.end - right.end)) {
-      expression = `if(gte(on,${transition.end}),${numberExpression(transition.to[property])},${expression})`;
+      expression = `if(gte(on,${transition.end}),${numberExpression(transition.settled[property])},${expression})`;
     }
     for (let index = transitions.length - 1; index >= 0; index -= 1) {
       const transition = transitions[index]!;
