@@ -143,7 +143,7 @@ export const buildFfmpegArgs = (job: RenderJob) => {
   const args = [
     '-hide_banner', '-y', '-loop', '1', '-i', job.inputPath,
   ];
-  if (job.audioPath) args.push('-stream_loop', '-1', '-i', job.audioPath);
+  if (job.audioPath) args.push('-stream_loop', '-1', '-ss', String(job.settings.audioSourceStart ?? 0), '-i', job.audioPath);
   args.push(
     '-vf', buildVideoFilter(job.settings),
     '-t', String(job.settings.duration), '-r', String(job.settings.fps),
@@ -151,7 +151,12 @@ export const buildFfmpegArgs = (job: RenderJob) => {
     '-progress', 'pipe:1', '-nostats',
   );
 
-  if (job.audioPath) args.push('-map', '0:v:0', '-map', '1:a:0', '-af', `volume=${job.settings.audioVolume}`, '-shortest');
+  if (job.audioPath) {
+    const audioVideoStart = Math.max(0, Math.min(job.settings.audioVideoStart ?? 0, job.settings.duration - 0.01));
+    const audioDuration = Math.max(0.01, job.settings.duration - audioVideoStart);
+    const delayMilliseconds = Math.round(audioVideoStart * 1000);
+    args.push('-map', '0:v:0', '-map', '1:a:0', '-af', `atrim=duration=${audioDuration},asetpts=PTS-STARTPTS,adelay=${delayMilliseconds}:all=1,volume=${job.settings.audioVolume}`, '-shortest');
+  }
   else args.push('-an');
 
   if (job.settings.format === 'webm') {
