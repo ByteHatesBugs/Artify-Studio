@@ -176,7 +176,7 @@ export function VideoReview({ source, outputName, settings }: VideoReviewProps) 
               className={`clip-effect effect-color-${index % 4}`}
               key={`${effect.motion}-${index}`}
               style={{ left: `${duration ? (effect.effectStart / duration) * 100 : 0}%`, width: `${duration ? ((effect.effectEnd - effect.effectStart) / duration) * 100 : 100}%` }}
-              title={`${index + 1}. ${effect.motion.replaceAll('-', ' ')} · ${effect.easing ?? 'cinematic'} curve · ${effect.strength}% strength · ${effect.effectStart}s–${effect.effectEnd}s`}
+              title={`${index + 1}. ${effect.motion.replaceAll('-', ' ')} · ${effect.easing ?? 'cinematic'} curve · ${effect.strength}% strength · ${effect.speed ?? 1}× speed · ${effect.effectStart}s–${effect.effectEnd}s`}
             />
           ))}
           <span className="timeline-playhead" style={{ left: `${progress}%` }} aria-hidden="true"><i /></span>
