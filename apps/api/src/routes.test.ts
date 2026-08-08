@@ -27,7 +27,7 @@ const { apiRouter } = await import('./routes.js');
 const settings: RenderJob['settings'] = {
   duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'zoom-in', focus: 'center',
   format: 'mp4', fit: 'cover', quality: 'balanced', fade: true, background: '#09090b', audioVolume: 0.8,
-  effects: [{ motion: 'zoom-in', focus: 'center', effectStart: 0, effectEnd: 5 }],
+  effects: [{ motion: 'zoom-in', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 }],
 };
 
 describe('completed render editing routes', () => {
