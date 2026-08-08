@@ -9,6 +9,7 @@ const validSettings = {
   fps: '30',
   resolution: '1080p',
   motion: 'zoom-in',
+  focus: 'center',
   format: 'mp4',
   fit: 'cover',
   quality: 'balanced',
@@ -38,5 +39,13 @@ describe('render settings validation', () => {
   it('rejects an effect that ends before it starts', () => {
     const parsed = createBatchSchema.safeParse({ ...validSettings, effectStart: '3', effectEnd: '2' });
     expect(parsed.success).toBe(false);
+  });
+
+  it('accepts per-image motion, focus, and timing overrides', () => {
+    const parsed = createBatchSchema.parse({
+      ...validSettings,
+      jobOverrides: JSON.stringify([{ motion: 'pan-left', focus: 'top', effectStart: 0.5, effectEnd: 2.5 }]),
+    });
+    expect(parsed.jobOverrides[0]).toEqual({ motion: 'pan-left', focus: 'top', effectStart: 0.5, effectEnd: 2.5 });
   });
 });
