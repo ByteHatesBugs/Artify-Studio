@@ -1,4 +1,7 @@
-export type MotionEffect = 'still' | 'zoom-in' | 'zoom-out' | 'pan-left' | 'pan-right';
+export type MotionEffect =
+  | 'still' | 'zoom-in' | 'zoom-out'
+  | 'pan-left' | 'pan-right' | 'pan-up' | 'pan-down'
+  | 'drift-up-left' | 'drift-up-right' | 'drift-down-left' | 'drift-down-right';
 export type Resolution = '480p' | '720p' | '1080p' | '1440p' | '4k' | 'square-720' | 'square' | 'portrait-720' | 'portrait' | 'feed-portrait';
 export type OutputFormat = 'mp4' | 'webm';
 export type FitMode = 'contain' | 'cover';
