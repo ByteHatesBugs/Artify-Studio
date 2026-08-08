@@ -13,6 +13,7 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Up to eight ordered motion effects per video, each with independent focal placement and timing
 - Independent 0–100 strength control for every motion segment
 - Stabilized zoom and pan rendering with adaptive supersampling and Lanczos scaling
+- Eleven smooth motion choices, including vertical pans and four diagonal drifts
 - Independent effect timing with visible overlapping lanes; earlier effects take priority wherever time ranges overlap
 - Video durations from 1 to 60 seconds
 - Per-image effect-stack overrides on top of reusable batch defaults
