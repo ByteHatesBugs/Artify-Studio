@@ -3,6 +3,7 @@ export type Resolution = '720p' | '1080p' | 'square' | 'portrait';
 export type OutputFormat = 'mp4' | 'webm';
 export type FitMode = 'contain' | 'cover';
 export type QualityProfile = 'draft' | 'balanced' | 'high';
+export type EffectFocus = 'center' | 'top' | 'bottom' | 'left' | 'right';
 export type JobStatus = 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
 export interface RenderSettings {
@@ -13,11 +14,19 @@ export interface RenderSettings {
   fps: number;
   resolution: Resolution;
   motion: MotionEffect;
+  focus: EffectFocus;
   format: OutputFormat;
   fit: FitMode;
   quality: QualityProfile;
   fade: boolean;
   background: string;
+}
+
+export interface ImageEffectOverride {
+  motion: MotionEffect;
+  focus: EffectFocus;
+  effectStart: number;
+  effectEnd: number;
 }
 
 export interface RenderJob {
@@ -27,6 +36,7 @@ export interface RenderJob {
   status: JobStatus;
   progress: number;
   attempts: number;
+  settings: Omit<RenderSettings, 'name'>;
   error?: string;
 }
 
@@ -45,6 +55,7 @@ export interface SelectedImage {
   id: string;
   file: File;
   previewUrl: string;
+  effectOverride?: ImageEffectOverride;
 }
 
 export interface HealthStatus {
