@@ -3,6 +3,18 @@ import { EFFECT_FOCUSES, FIT_MODES, MOTION_EFFECTS, OUTPUT_FORMATS, QUALITY_PROF
 
 const hexColor = /^#[0-9a-fA-F]{6}$/;
 
+const effectSegmentSchema = z.object({
+  motion: z.enum(MOTION_EFFECTS),
+  focus: z.enum(EFFECT_FOCUSES).default('center'),
+  effectStart: z.coerce.number().min(0).max(30),
+  effectEnd: z.coerce.number().min(0.1).max(30),
+});
+
+const effectsSchema = z.preprocess((value) => {
+  if (typeof value !== 'string') return value;
+  try { return JSON.parse(value); } catch { return value; }
+}, z.array(effectSegmentSchema).min(1).max(8));
+
 const renderSettingsShape = {
   duration: z.coerce.number().min(1).max(30).default(5),
   effectStart: z.coerce.number().min(0).max(30).default(0),
@@ -12,10 +24,11 @@ const renderSettingsShape = {
   motion: z.enum(MOTION_EFFECTS).default('zoom-in'),
   focus: z.enum(EFFECT_FOCUSES).default('center'),
   format: z.enum(OUTPUT_FORMATS).default('mp4'),
-  fit: z.enum(FIT_MODES).default('contain'),
+  fit: z.enum(FIT_MODES).default('cover'),
   quality: z.enum(QUALITY_PROFILES).default('balanced'),
   fade: z.preprocess((value) => value === true || value === 'true', z.boolean()).default(true),
   background: z.string().regex(hexColor).default('#09090b'),
+  effects: effectsSchema,
 };
 
 const jobOverrideSchema = z.object({
@@ -23,6 +36,7 @@ const jobOverrideSchema = z.object({
   focus: z.enum(EFFECT_FOCUSES).optional(),
   effectStart: z.coerce.number().min(0).max(30).optional(),
   effectEnd: z.coerce.number().min(0.1).max(30).optional(),
+  effects: effectsSchema.optional(),
 });
 
 const jobOverridesSchema = z.preprocess((value) => {
@@ -39,19 +53,58 @@ const validateEffectTiming = (settings: { duration: number; effectStart: number;
   }
 };
 
+const validateEffects = (
+  effects: Array<{ effectStart: number; effectEnd: number }>,
+  duration: number,
+  context: z.RefinementCtx,
+  path: Array<string | number> = ['effects'],
+) => {
+  effects.forEach((effect, index) => {
+    if (effect.effectStart >= effect.effectEnd) {
+      context.addIssue({ code: 'custom', path: [...path, index, 'effectEnd'], message: 'Effect end must be after its start.' });
+    }
+    if (effect.effectEnd > duration) {
+      context.addIssue({ code: 'custom', path: [...path, index, 'effectEnd'], message: 'Effect timing must fit inside the video duration.' });
+    }
+    if (index > 0 && effect.effectStart < effects[index - 1]!.effectEnd) {
+      context.addIssue({ code: 'custom', path: [...path, index, 'effectStart'], message: 'Effects must be ordered and cannot overlap.' });
+    }
+  });
+};
+
 const normalizeEffectTiming = (value: unknown) => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
   const settings = value as Record<string, unknown>;
+  let effects = settings.effects;
+  if (typeof effects === 'string') {
+    try { effects = JSON.parse(effects); } catch { /* Let Zod report the malformed value. */ }
+  }
+  if (!Array.isArray(effects) || effects.length === 0) {
+    effects = [{
+      motion: settings.motion ?? 'zoom-in',
+      focus: settings.focus ?? 'center',
+      effectStart: settings.effectStart ?? 0,
+      effectEnd: settings.effectEnd ?? settings.duration ?? 5,
+    }];
+  }
+  const effectList = effects as unknown[];
+  const primary = effectList[0] && typeof effectList[0] === 'object' ? effectList[0] as Record<string, unknown> : {};
   return {
     ...settings,
-    effectStart: settings.effectStart ?? 0,
-    effectEnd: settings.effectEnd ?? settings.duration ?? 5,
+    motion: primary.motion ?? settings.motion ?? 'zoom-in',
+    focus: primary.focus ?? settings.focus ?? 'center',
+    effectStart: primary.effectStart ?? settings.effectStart ?? 0,
+    effectEnd: primary.effectEnd ?? settings.effectEnd ?? settings.duration ?? 5,
+    effects: effectList,
   };
 };
 
 export const renderSettingsSchema = z.preprocess(
   normalizeEffectTiming,
-  z.object(renderSettingsShape).superRefine(validateEffectTiming),
+  z.object(renderSettingsShape).superRefine((settings, context) => {
+    validateEffectTiming(settings, context);
+    validateEffects(settings.effects, settings.duration, context);
+  }),
 );
 
 export const createBatchSchema = z.preprocess(
@@ -62,6 +115,7 @@ export const createBatchSchema = z.preprocess(
     jobOverrides: jobOverridesSchema,
   }).superRefine((settings, context) => {
     validateEffectTiming(settings, context);
+    validateEffects(settings.effects, settings.duration, context);
     settings.jobOverrides.forEach((override, index) => {
       const resolved = { ...settings, ...override };
       if (resolved.effectStart >= resolved.effectEnd) {
@@ -70,6 +124,7 @@ export const createBatchSchema = z.preprocess(
       if (resolved.effectEnd > resolved.duration) {
         context.addIssue({ code: 'custom', path: ['jobOverrides', index, 'effectEnd'], message: 'Effect timing must fit inside the video duration.' });
       }
+      validateEffects(resolved.effects, resolved.duration, context, ['jobOverrides', index, 'effects']);
     });
   }),
 );
