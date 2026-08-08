@@ -126,7 +126,7 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
         <label className="field-control">
           <span><Clock3 size={15} /> Duration</span>
           <select value={settings.duration} onChange={(event) => changeDuration(Number(event.target.value))}>
-            {[3, 5, 8, 10, 15].map((duration) => <option key={duration} value={duration}>{duration} seconds</option>)}
+            {[3, 5, 8, 10, 15, 30, 45, 60].map((duration) => <option key={duration} value={duration}>{duration} seconds</option>)}
           </select>
         </label>
         <label className="field-control">
