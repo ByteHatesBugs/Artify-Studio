@@ -8,7 +8,7 @@ The interface is designed for repeatable creative work: previews before upload, 
 
 - Batch upload for up to 50 images with client- and server-side validation
 - Duplicate detection plus drag, keyboard, and button-based source reordering
-- Five motion profiles with a live first-image preview: still, zoom in, zoom out, pan left, and pan right
+- Eleven motion effects with a live first-image preview, including zooms, horizontal and vertical pans, diagonal drifts, and a locked frame
 - Exact effect start and end timing with motion held before and after the selected window
 - Up to eight ordered motion effects per video, each with independent focal placement and timing
 - Independent 0–100 strength control for every motion segment
