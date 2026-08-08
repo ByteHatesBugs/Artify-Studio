@@ -1,5 +1,5 @@
 {
-  "name": "artify-studio",
+  "name": "renderflow",
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
@@ -10,10 +10,10 @@
   ],
   "scripts": {
     "dev": "bun run --filter '*' dev",
-    "build": "bun --filter @artify/api build && bun --filter @artify/web build",
-    "check": "bun --filter @artify/api check && bun --filter @artify/web check",
-    "test": "bun --filter @artify/api test && bun --filter @artify/web test",
-    "start": "bun --filter @artify/api start"
+    "build": "bun --filter @renderflow/api build && bun --filter @renderflow/web build",
+    "check": "bun --filter @renderflow/api check && bun --filter @renderflow/web check",
+    "test": "bun --filter @renderflow/api test && bun --filter @renderflow/web test",
+    "start": "bun --filter @renderflow/api start"
   },
   "engines": {
     "bun": ">=1.3.0",
