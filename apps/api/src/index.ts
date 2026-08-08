@@ -18,7 +18,7 @@ startCleanupScheduler();
 
 const app = createApp();
 const server = app.listen(config.port, () => {
-  console.log(`Artify API listening on http://localhost:${config.port}`);
+  console.log(`RenderFlow API listening on http://localhost:${config.port}`);
 });
 
 let shuttingDown = false;
