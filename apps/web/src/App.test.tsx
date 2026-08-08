@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import App from './App';
 
@@ -20,6 +20,10 @@ describe('RenderFlow', () => {
     render(<App />);
     expect(screen.getByRole('heading', { name: /still images/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /upload images/i })).toBeTruthy();
+    const campaignProfile = screen.getByRole('button', { name: /campaign full hd/i });
+    expect(campaignProfile.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(campaignProfile);
+    expect(campaignProfile.getAttribute('aria-pressed')).toBe('true');
     expect(await screen.findByRole('button', { name: /render 0 videos/i })).toHaveProperty('disabled', true);
     expect(screen.getByRole('heading', { name: /your render queue is ready/i })).toBeTruthy();
   });
