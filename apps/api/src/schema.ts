@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EFFECT_FOCUSES, FIT_MODES, MOTION_EFFECTS, OUTPUT_FORMATS, QUALITY_PROFILES, RESOLUTIONS } from './types.js';
+import { EFFECT_EASINGS, EFFECT_FOCUSES, FIT_MODES, MOTION_EFFECTS, OUTPUT_FORMATS, QUALITY_PROFILES, RESOLUTIONS } from './types.js';
 
 const hexColor = /^#[0-9a-fA-F]{6}$/;
 
@@ -7,6 +7,7 @@ const effectSegmentSchema = z.object({
   motion: z.enum(MOTION_EFFECTS),
   focus: z.enum(EFFECT_FOCUSES).default('center'),
   strength: z.coerce.number().min(0).max(100).default(50),
+  easing: z.enum(EFFECT_EASINGS).default('cinematic'),
   effectStart: z.coerce.number().min(0).max(60),
   effectEnd: z.coerce.number().min(0.1).max(60),
 });
@@ -39,6 +40,7 @@ const jobOverrideSchema = z.object({
   motion: z.enum(MOTION_EFFECTS).optional(),
   focus: z.enum(EFFECT_FOCUSES).optional(),
   strength: z.coerce.number().min(0).max(100).optional(),
+  easing: z.enum(EFFECT_EASINGS).optional(),
   effectStart: z.coerce.number().min(0).max(60).optional(),
   effectEnd: z.coerce.number().min(0.1).max(60).optional(),
   effects: effectsSchema.optional(),
@@ -92,6 +94,7 @@ const normalizeEffectTiming = (value: unknown) => {
       motion: settings.motion ?? 'zoom-in',
       focus: settings.focus ?? 'center',
       strength: 50,
+      easing: 'cinematic',
       effectStart: settings.effectStart ?? 0,
       effectEnd: settings.effectEnd ?? settings.duration ?? 5,
     }];
