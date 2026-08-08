@@ -9,7 +9,7 @@ const readJson = async <T>(response: Response): Promise<T> => {
 export const createBatch = async (images: SelectedImage[], settings: RenderSettings) => {
   const form = new FormData();
   images.forEach((image) => form.append('images', image.file));
-  Object.entries(settings).forEach(([key, value]) => form.append(key, String(value)));
+  Object.entries(settings).forEach(([key, value]) => form.append(key, key === 'effects' ? JSON.stringify(value) : String(value)));
   form.append('jobOverrides', JSON.stringify(images.map((image) => image.effectOverride ?? {})));
   const response = await fetch('/api/batches', { method: 'POST', body: form });
   return readJson<{ batch: Batch }>(response);
