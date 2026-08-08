@@ -24,16 +24,18 @@ export const createApp = () => {
   const errorHandler: ErrorRequestHandler = (error, _request, response, _next) => {
     if (error instanceof multer.MulterError) {
       const message = error.code === 'LIMIT_FILE_SIZE'
-        ? `Each image must be smaller than ${Math.round(config.maxFileSizeBytes / 1024 / 1024)} MB.`
+        ? `Each image or audio file must be smaller than ${Math.round(config.maxFileSizeBytes / 1024 / 1024)} MB.`
         : error.code === 'LIMIT_FILE_COUNT'
-          ? `A batch can contain up to ${config.maxBatchSize} images.`
+          ? `A batch can contain up to ${config.maxBatchSize} images and one soundtrack.`
           : error.message;
       response.status(400).json({ error: message });
       return;
     }
     const message = error instanceof Error ? error.message : 'An unexpected error occurred.';
-    console.error(error);
-    response.status(500).json({ error: message });
+    const candidateStatus = error && typeof error === 'object' && 'status' in error ? Number(error.status) : 500;
+    const status = Number.isInteger(candidateStatus) && candidateStatus >= 400 && candidateStatus < 500 ? candidateStatus : 500;
+    if (status === 500) console.error(error);
+    response.status(status).json({ error: message });
   };
   app.use(errorHandler);
   return app;
