@@ -1,5 +1,5 @@
 {
-  "name": "@artify/web",
+  "name": "@renderflow/web",
   "version": "1.0.0",
   "private": true,
   "type": "module",
