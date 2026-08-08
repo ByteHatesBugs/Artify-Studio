@@ -28,6 +28,7 @@ export class BatchStore {
       batch.settings.fade ??= true;
       batch.settings.effectStart ??= 0;
       batch.settings.effectEnd ??= batch.settings.duration;
+      batch.settings.effects ??= [{ motion: batch.settings.motion, focus: batch.settings.focus ?? 'center', effectStart: batch.settings.effectStart, effectEnd: batch.settings.effectEnd }];
       const jobs: RenderJob[] = [];
       for (const job of batch.jobs) {
         job.settings.fit ??= batch.settings.fit;
@@ -35,6 +36,7 @@ export class BatchStore {
         job.settings.fade ??= batch.settings.fade;
         job.settings.effectStart ??= batch.settings.effectStart;
         job.settings.effectEnd ??= batch.settings.effectEnd;
+        job.settings.effects ??= [{ motion: job.settings.motion, focus: job.settings.focus ?? 'center', effectStart: job.settings.effectStart, effectEnd: job.settings.effectEnd }];
         job.attempts ??= job.startedAt ? 1 : 0;
         if (job.status === 'completed') {
           const outputExists = await access(job.outputPath).then(() => true).catch(() => false);
