@@ -33,9 +33,6 @@ export interface RenderSettings {
   quality: QualityProfile;
   fade: boolean;
   background: string;
-  audioVolume: number;
-  audioSourceStart: number;
-  audioVideoStart: number;
   effects: EffectSegment[];
 }
 
@@ -46,7 +43,6 @@ export interface ImageEffectOverride {
 export interface RenderJob {
   id: string;
   originalName: string;
-  audioName?: string;
   outputName: string;
   status: JobStatus;
   progress: number;
@@ -73,10 +69,6 @@ export interface SelectedImage {
   effectOverride?: ImageEffectOverride;
 }
 
-export interface SelectedAudio {
-  file: File;
-  previewUrl: string;
-}
 
 export interface HealthStatus {
   status: 'ok' | 'degraded';
