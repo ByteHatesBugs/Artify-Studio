@@ -69,9 +69,6 @@ const validateEffects = (
     if (effect.effectEnd > duration) {
       context.addIssue({ code: 'custom', path: [...path, index, 'effectEnd'], message: 'Effect timing must fit inside the video duration.' });
     }
-    if (index > 0 && effect.effectStart < effects[index - 1]!.effectEnd) {
-      context.addIssue({ code: 'custom', path: [...path, index, 'effectStart'], message: 'Effects must be ordered and cannot overlap.' });
-    }
   });
 };
 
