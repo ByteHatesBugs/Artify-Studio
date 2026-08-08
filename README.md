@@ -1,6 +1,6 @@
-# Artify Studio
+# RenderFlow
 
-Artify Studio is a full-stack batch image-to-video workspace. Upload a set of JPG, PNG, or WebP images, choose a consistent motion profile, and render every image into a production-ready MP4 or WebM video.
+RenderFlow is a full-stack batch image-to-video workspace. Upload a set of JPG, PNG, or WebP images, choose a consistent motion profile, and render every image into a production-ready MP4 or WebM video.
 
 The interface is designed for repeatable creative work: previews before upload, predictable render settings, controlled server concurrency, per-file progress, cancellation, individual downloads, and a ZIP export for completed batches.
 
@@ -10,7 +10,7 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Duplicate detection plus drag, keyboard, and button-based source reordering
 - Five motion profiles with a live first-image preview: still, zoom in, zoom out, pan left, and pan right
 - Exact effect start and end timing with motion held before and after the selected window
-- Batch-wide profiles that apply identical timing, motion, framing, and quality to every selected image
+- Per-image motion, focal placement, and timing overrides on top of reusable batch defaults
 - Contain and cover framing modes with configurable canvas background color
 - Draft, balanced, and high encoding profiles that change FFmpeg speed and output quality
 - Optional fade-in and fade-out transitions for polished clips
@@ -21,6 +21,7 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Live batch and per-video render progress
 - Durable batch history with automatic recovery after server restarts
 - Safe cancellation, failed-job retries, individual downloads, and batch ZIP archives
+- Inline video players with seek controls for checking completed renders before download
 - Filterable render history with loading, empty, busy, confirmation, and notification states
 - Responsive, keyboard-accessible interface
 - Lazy preview decoding and viewport-aware rendering for smooth large-batch editing
@@ -29,7 +30,7 @@ The interface is designed for repeatable creative work: previews before upload, 
 ## Architecture
 
 ```text
-Artify-Studio/
+RenderFlow/
 ├── apps/
 │   ├── api/              Express + TypeScript render service
 │   │   └── src/
@@ -60,8 +61,8 @@ ffmpeg -version
 ## Installation
 
 ```bash
-git clone https://github.com/ByteHatesBugs/Artify-Studio.git
-cd Artify-Studio
+git clone https://github.com/ByteHatesBugs/RenderFlow.git
+cd RenderFlow
 git switch dev
 bun install
 ```
@@ -100,6 +101,14 @@ bun install --frozen-lockfile
 cp .env.example .env
 bun run dev
 ```
+
+Run the same verification used by development before handing a build to a NixOS client:
+
+```bash
+nix develop --command bash -lc 'bun install --frozen-lockfile && bun run check && bun run test && bun run build'
+```
+
+All runtime paths are resolved with Node's cross-platform path utilities, and FFmpeg is read from `FFMPEG_PATH`; the flake sets that variable to the Nix store executable automatically.
 
 For a production-like run:
 
@@ -164,7 +173,7 @@ Keep `QUEUE_CONCURRENCY` conservative. Full HD video encoding is CPU- and memory
 
 Media files and an atomic JSON batch journal are stored under `storage/`. Completed history survives restarts, interrupted jobs are returned to the queue when their source images remain available, and failed or cancelled jobs can be retried from the interface until the retention window expires. Input images, outputs, archives, and history are removed together by the cleanup process.
 
-The built-in journal is appropriate for one Artify API instance. For a multi-instance deployment, replace it with PostgreSQL or Redis and move media to object storage such as S3/R2. The store, queue, and route boundaries are separated to make that upgrade straightforward.
+The built-in journal is appropriate for one RenderFlow API instance. For a multi-instance deployment, replace it with PostgreSQL or Redis and move media to object storage such as S3/R2. The store, queue, and route boundaries are separated to make that upgrade straightforward.
 
 ## Security and operations
 
@@ -176,4 +185,4 @@ The built-in journal is appropriate for one Artify API instance. For a multi-ins
 
 ## License
 
-Artify Studio is available under the [MIT License](LICENSE). Copyright © 2026 ByteHatesBugs.
+RenderFlow is available under the [MIT License](LICENSE). Copyright © 2026 ByteHatesBugs.
