@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Blend, Clapperboard, Clock3, Crop, Eye, Gauge, MonitorUp, Play, RotateCcw, Sparkles } from 'lucide-react';
 import type { RenderSettings } from '../types';
+import { EffectStackEditor } from './EffectStackEditor';
 
 interface SettingsPanelProps {
   settings: RenderSettings;
@@ -21,9 +22,9 @@ const resolutions = [
 ] as const;
 
 const profiles: Array<{ label: string; detail: string; settings: Partial<RenderSettings> }> = [
-  { label: 'Campaign', detail: 'Full HD · MP4', settings: { resolution: '1080p', format: 'mp4', motion: 'zoom-in', focus: 'center', duration: 5, effectStart: 0, effectEnd: 5, fps: 30, fit: 'cover', quality: 'high', fade: true } },
-  { label: 'Social', detail: 'Portrait · MP4', settings: { resolution: 'portrait', format: 'mp4', motion: 'zoom-in', duration: 5, effectStart: 0.5, effectEnd: 4.5, fps: 30, fit: 'cover', quality: 'balanced', fade: true } },
-  { label: 'Lightweight', detail: 'HD · WebM', settings: { resolution: '720p', format: 'webm', motion: 'still', duration: 3, effectStart: 0, effectEnd: 3, fps: 24, fit: 'contain', quality: 'draft', fade: false } },
+  { label: 'Campaign', detail: 'Full HD · MP4', settings: { resolution: '1080p', format: 'mp4', motion: 'zoom-in', focus: 'center', duration: 5, effectStart: 0, effectEnd: 5, effects: [{ motion: 'zoom-in', focus: 'center', effectStart: 0, effectEnd: 5 }], fps: 30, fit: 'cover', quality: 'high', fade: true } },
+  { label: 'Social', detail: 'Portrait · MP4', settings: { resolution: 'portrait', format: 'mp4', motion: 'zoom-in', focus: 'center', duration: 5, effectStart: 0.5, effectEnd: 4.5, effects: [{ motion: 'zoom-in', focus: 'center', effectStart: 0.5, effectEnd: 4.5 }], fps: 30, fit: 'cover', quality: 'balanced', fade: true } },
+  { label: 'Lightweight', detail: 'HD · WebM', settings: { resolution: '720p', format: 'webm', motion: 'still', focus: 'center', duration: 3, effectStart: 0, effectEnd: 3, effects: [{ motion: 'still', focus: 'center', effectStart: 0, effectEnd: 3 }], fps: 24, fit: 'cover', quality: 'draft', fade: false } },
 ];
 
 export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting, engineReady, onChange, onReset, onSubmit }: SettingsPanelProps) {
@@ -31,9 +32,8 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
   const update = <K extends keyof RenderSettings>(key: K, value: RenderSettings[K]) => onChange({ ...settings, [key]: value });
   const qualityFactor = settings.quality === 'draft' ? 0.65 : settings.quality === 'high' ? 1.6 : 1;
   const estimatedSeconds = Math.ceil((imageCount * settings.duration / 2) * qualityFactor);
-  const effectLeft = (settings.effectStart / settings.duration) * 100;
-  const effectWidth = ((settings.effectEnd - settings.effectStart) / settings.duration) * 100;
-  const objectPosition = { center: 'center', top: 'center top', bottom: 'center bottom', left: 'left center', right: 'right center' }[settings.focus];
+  const primaryEffect = settings.effects[0]!;
+  const objectPosition = { center: 'center', top: 'center top', bottom: 'center bottom', left: 'left center', right: 'right center' }[primaryEffect.focus];
 
   useEffect(() => {
     const element = previewRef.current;
@@ -45,15 +45,19 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
       'pan-right': ['scale(1.08) translateX(-3%)', 'scale(1.08) translateX(3%)'],
       still: ['scale(1)', 'scale(1)'],
     };
-    const [from, to] = transforms[settings.motion];
-    const startOffset = settings.effectStart / settings.duration;
-    const endOffset = settings.effectEnd / settings.duration;
-    const motionAnimation = element.animate([
-      { transform: from, offset: 0 },
-      { transform: from, offset: startOffset, easing: 'ease-in-out' },
-      { transform: to, offset: endOffset },
-      { transform: to, offset: 1 },
-    ], { duration: settings.duration * 1000, iterations: Infinity, direction: 'alternate', easing: 'linear' });
+    let currentTransform = transforms[settings.effects[0]!.motion][0];
+    let currentOffset = 0;
+    const keyframes: Keyframe[] = [{ transform: currentTransform, offset: 0 }];
+    settings.effects.forEach((effect) => {
+      const startOffset = effect.effectStart / settings.duration;
+      const endOffset = effect.effectEnd / settings.duration;
+      if (startOffset > currentOffset) keyframes.push({ transform: currentTransform, offset: startOffset });
+      currentTransform = transforms[effect.motion][1];
+      keyframes.push({ transform: currentTransform, offset: endOffset, easing: 'ease-in-out' });
+      currentOffset = endOffset;
+    });
+    if (currentOffset < 1) keyframes.push({ transform: currentTransform, offset: 1 });
+    const motionAnimation = element.animate(keyframes, { duration: settings.duration * 1000, iterations: Infinity, direction: 'alternate', easing: 'linear' });
     const fadeDuration = Math.min(0.5, settings.duration / 4) / settings.duration;
     const fadeAnimation = settings.fade ? element.animate([
       { opacity: 0, offset: 0 },
@@ -65,22 +69,21 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
       motionAnimation.cancel();
       fadeAnimation?.cancel();
     };
-  }, [previewImage, settings.duration, settings.effectStart, settings.effectEnd, settings.motion, settings.fade]);
+  }, [previewImage, settings.duration, settings.effects, settings.fade]);
 
   const changeDuration = (duration: number) => {
-    const effectEnd = Math.min(settings.effectEnd, duration);
-    const effectStart = Math.min(settings.effectStart, Math.max(0, effectEnd - 0.1));
-    onChange({ ...settings, duration, effectStart, effectEnd });
+    const effects = settings.effects.map((effect, index) => ({
+      ...effect,
+      effectStart: Number(((effect.effectStart / settings.duration) * duration).toFixed(2)),
+      effectEnd: Number((index === settings.effects.length - 1 ? duration : (effect.effectEnd / settings.duration) * duration).toFixed(2)),
+    }));
+    const primary = effects[0]!;
+    onChange({ ...settings, duration, effects, motion: primary.motion, focus: primary.focus, effectStart: primary.effectStart, effectEnd: primary.effectEnd });
   };
 
-  const changeEffectStart = (effectStart: number) => {
-    const clamped = Math.max(0, Math.min(effectStart, settings.effectEnd - 0.05));
-    onChange({ ...settings, effectStart: Number(clamped.toFixed(2)) });
-  };
-
-  const changeEffectEnd = (effectEnd: number) => {
-    const clamped = Math.min(settings.duration, Math.max(effectEnd, 0.1, settings.effectStart + 0.05));
-    onChange({ ...settings, effectEnd: Number(clamped.toFixed(2)) });
+  const changeEffects = (effects: RenderSettings['effects']) => {
+    const primary = effects[0]!;
+    onChange({ ...settings, effects, motion: primary.motion, focus: primary.focus, effectStart: primary.effectStart, effectEnd: primary.effectEnd });
   };
 
   return (
@@ -113,7 +116,7 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
             style={{ objectFit: settings.fit, objectPosition }}
           />
         ) : <div className="preview-placeholder"><Sparkles size={19} /><span>Add an image to preview motion</span></div>}
-        <span className="preview-badge">{settings.fit} · {settings.motion.replace('-', ' ')}</span>
+        <span className="preview-badge">{settings.fit} · {settings.effects.length} effect{settings.effects.length === 1 ? '' : 's'}</span>
       </div>
 
       <label className="field-label" htmlFor="batch-name">Batch name</label>
@@ -166,50 +169,7 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
         </label>
       </div>
 
-      <div className="field-grid">
-        <label className="field-control">
-          <span><Sparkles size={15} /> Motion</span>
-          <select value={settings.motion} onChange={(event) => update('motion', event.target.value as RenderSettings['motion'])}>
-            <option value="zoom-in">Slow zoom in</option>
-            <option value="zoom-out">Slow zoom out</option>
-            <option value="pan-left">Pan left</option>
-            <option value="pan-right">Pan right</option>
-            <option value="still">Still frame</option>
-          </select>
-        </label>
-        <label className="field-control">
-          <span><Crop size={15} /> Effect focus</span>
-          <select value={settings.focus} onChange={(event) => update('focus', event.target.value as RenderSettings['focus'])}>
-            <option value="center">Center</option><option value="top">Top</option><option value="bottom">Bottom</option><option value="left">Left</option><option value="right">Right</option>
-          </select>
-        </label>
-      </div>
-
-      <div className="timing-control">
-        <div className="timing-heading">
-          <span><Clock3 size={15} /> Effect timing</span>
-          <small>Batch default</small>
-        </div>
-        <div className="timing-timeline">
-          <div className="timing-track" aria-hidden="true">
-            <span style={{ left: `${effectLeft}%`, width: `${effectWidth}%` }} />
-          </div>
-          <input className="timeline-range" aria-label="Effect start time" type="range" min={0} max={settings.duration} step={0.05} value={settings.effectStart} onChange={(event) => changeEffectStart(Number(event.target.value))} />
-          <input className="timeline-range" aria-label="Effect end time" type="range" min={0.1} max={settings.duration} step={0.05} value={settings.effectEnd} onChange={(event) => changeEffectEnd(Number(event.target.value))} />
-        </div>
-        <div className="timing-inputs">
-          <label>
-            <span>Start</span>
-            <div><input type="number" min={0} max={Math.max(0, settings.effectEnd - 0.05)} step={0.05} value={settings.effectStart} onChange={(event) => changeEffectStart(Number(event.target.value))} /><small>sec</small></div>
-          </label>
-          <span className="timing-arrow">→</span>
-          <label>
-            <span>End</span>
-            <div><input type="number" min={settings.effectStart + 0.05} max={settings.duration} step={0.05} value={settings.effectEnd} onChange={(event) => changeEffectEnd(Number(event.target.value))} /><small>sec</small></div>
-          </label>
-        </div>
-        <p>The selected motion starts at {settings.effectStart.toFixed(1)}s, finishes at {settings.effectEnd.toFixed(1)}s, and holds its frame outside that window.</p>
-      </div>
+      <EffectStackEditor effects={settings.effects} duration={settings.duration} onChange={changeEffects} />
 
       <button className="switch-row" type="button" role="switch" aria-checked={settings.fade} onClick={() => update('fade', !settings.fade)}>
         <span className="switch-copy"><Blend size={15} /><span><strong>Fade transition</strong><small>Ease the video in and out</small></span></span>
