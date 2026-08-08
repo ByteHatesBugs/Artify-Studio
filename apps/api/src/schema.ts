@@ -30,6 +30,8 @@ const renderSettingsShape = {
   fade: z.preprocess((value) => value === true || value === 'true', z.boolean()).default(true),
   background: z.string().regex(hexColor).default('#09090b'),
   audioVolume: z.coerce.number().min(0).max(1).default(0.8),
+  audioSourceStart: z.coerce.number().min(0).max(3600).default(0),
+  audioVideoStart: z.coerce.number().min(0).max(60).default(0),
   effects: effectsSchema,
 };
 
@@ -53,6 +55,12 @@ const validateEffectTiming = (settings: { duration: number; effectStart: number;
   }
   if (settings.effectEnd > settings.duration) {
     context.addIssue({ code: 'custom', path: ['effectEnd'], message: 'Effect timing must fit inside the video duration.' });
+  }
+};
+
+const validateAudioTiming = (settings: { duration: number; audioVideoStart: number }, context: z.RefinementCtx) => {
+  if (settings.audioVideoStart >= settings.duration) {
+    context.addIssue({ code: 'custom', path: ['audioVideoStart'], message: 'Soundtrack placement must begin before the video ends.' });
   }
 };
 
@@ -104,6 +112,7 @@ export const renderSettingsSchema = z.preprocess(
   normalizeEffectTiming,
   z.object(renderSettingsShape).superRefine((settings, context) => {
     validateEffectTiming(settings, context);
+    validateAudioTiming(settings, context);
     validateEffects(settings.effects, settings.duration, context);
   }),
 );
@@ -116,6 +125,7 @@ export const createBatchSchema = z.preprocess(
     jobOverrides: jobOverridesSchema,
   }).superRefine((settings, context) => {
     validateEffectTiming(settings, context);
+    validateAudioTiming(settings, context);
     validateEffects(settings.effects, settings.duration, context);
     settings.jobOverrides.forEach((override, index) => {
       const resolved = { ...settings, ...override };
