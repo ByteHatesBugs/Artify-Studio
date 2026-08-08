@@ -70,7 +70,24 @@ apiRouter.post('/batches', upload.array('images'), (request, response, next) => 
       usedNames.set(stem, sequence);
       const uniqueStem = sequence === 1 ? stem : `${stem}-${sequence}`;
       const id = randomUUID();
-      const jobSettings = { ...settings, ...(jobOverrides[index] ?? {}) };
+      const override = jobOverrides[index] ?? {};
+      const hasLegacyOverride = override.motion || override.focus || override.effectStart !== undefined || override.effectEnd !== undefined;
+      const effects = override.effects ?? (hasLegacyOverride ? [{
+        motion: override.motion ?? settings.motion,
+        focus: override.focus ?? settings.focus,
+        effectStart: override.effectStart ?? settings.effectStart,
+        effectEnd: override.effectEnd ?? settings.effectEnd,
+      }] : settings.effects);
+      const primaryEffect = effects[0]!;
+      const jobSettings = {
+        ...settings,
+        ...override,
+        effects,
+        motion: primaryEffect.motion,
+        focus: primaryEffect.focus,
+        effectStart: primaryEffect.effectStart,
+        effectEnd: primaryEffect.effectEnd,
+      };
       const outputName = `${uniqueStem}.${jobSettings.format}`;
       return {
         id,
