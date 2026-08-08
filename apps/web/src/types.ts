@@ -1,5 +1,5 @@
 export type MotionEffect = 'still' | 'zoom-in' | 'zoom-out' | 'pan-left' | 'pan-right';
-export type Resolution = '720p' | '1080p' | 'square' | 'portrait';
+export type Resolution = '480p' | '720p' | '1080p' | '1440p' | '4k' | 'square-720' | 'square' | 'portrait-720' | 'portrait' | 'feed-portrait';
 export type OutputFormat = 'mp4' | 'webm';
 export type FitMode = 'contain' | 'cover';
 export type QualityProfile = 'draft' | 'balanced' | 'high';
@@ -27,6 +27,7 @@ export interface RenderSettings {
   quality: QualityProfile;
   fade: boolean;
   background: string;
+  audioVolume: number;
   effects: EffectSegment[];
 }
 
@@ -37,6 +38,7 @@ export interface ImageEffectOverride {
 export interface RenderJob {
   id: string;
   originalName: string;
+  audioName?: string;
   outputName: string;
   status: JobStatus;
   progress: number;
@@ -61,6 +63,11 @@ export interface SelectedImage {
   file: File;
   previewUrl: string;
   effectOverride?: ImageEffectOverride;
+}
+
+export interface SelectedAudio {
+  file: File;
+  previewUrl: string;
 }
 
 export interface HealthStatus {
