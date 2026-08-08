@@ -1,6 +1,6 @@
 import { unlink } from 'node:fs/promises';
 import { config } from './config.js';
-import { renderImage } from './media.js';
+import { renderImage, verifyRender } from './media.js';
 import { batchStore } from './store.js';
 import type { RenderJob } from './types.js';
 
@@ -60,6 +60,7 @@ export class RenderQueue {
 
     try {
       await handle.completion;
+      await verifyRender(job.outputPath, job.settings);
       if (job.supersededOutputPath) await unlink(job.supersededOutputPath).catch(() => undefined);
       batchStore.updateJob(batchId, job.id, { status: 'completed', progress: 100, completedAt: new Date().toISOString(), supersededOutputPath: undefined, supersededOutputName: undefined });
     } catch (error) {
