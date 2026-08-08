@@ -60,6 +60,14 @@ describe('render settings validation', () => {
     });
     expect(parsed.effects).toHaveLength(2);
     expect(parsed.effects[1]?.motion).toBe('pan-left');
+    expect(parsed.effects[0]?.strength).toBe(50);
+  });
+
+  it('validates independent effect strength', () => {
+    const strong = createBatchSchema.safeParse({ ...validSettings, effects: JSON.stringify([{ motion: 'zoom-in', focus: 'center', strength: 85, effectStart: 0, effectEnd: 5 }]) });
+    const excessive = createBatchSchema.safeParse({ ...validSettings, effects: JSON.stringify([{ motion: 'zoom-in', focus: 'center', strength: 101, effectStart: 0, effectEnd: 5 }]) });
+    expect(strong.success && strong.data.effects[0]?.strength).toBe(85);
+    expect(excessive.success).toBe(false);
   });
 
   it('rejects overlapping effect segments', () => {
