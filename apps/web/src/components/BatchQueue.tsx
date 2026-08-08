@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
-import { AlertCircle, Check, ChevronUp, CirclePlay, Download, Film, Inbox, LoaderCircle, Pencil, RotateCcw, Square, Trash2, X } from 'lucide-react';
+import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { AlertCircle, Check, ChevronUp, CirclePlay, Download, Film, Inbox, LoaderCircle, Pencil, RotateCcw, Search, Square, Trash2, X } from 'lucide-react';
 import { batchDownloadUrl, jobDownloadUrl, jobPreviewUrl } from '../api';
 import type { Batch, JobStatus, RenderJob } from '../types';
-import { VideoReview } from './VideoReview';
-import { RenderedVideoEditor } from './RenderedVideoEditor';
+
+const VideoReview = lazy(() => import('./VideoReview').then((module) => ({ default: module.VideoReview })));
+const RenderedVideoEditor = lazy(() => import('./RenderedVideoEditor').then((module) => ({ default: module.RenderedVideoEditor })));
 
 interface BatchQueueProps {
   batches: Batch[];
@@ -35,20 +36,41 @@ type QueueFilter = 'all' | 'active' | 'ready' | 'attention';
 
 export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onRenameJob, onRerenderJob, onDelete }: BatchQueueProps) {
   const [filter, setFilter] = useState<QueueFilter>('all');
+  const [query, setQuery] = useState('');
   const [previewKey, setPreviewKey] = useState<string | null>(null);
   const [editorKey, setEditorKey] = useState<string | null>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const deferredQuery = useDeferredValue(query.trim().toLowerCase());
   const visibleBatches = useMemo(() => batches.filter((batch) => {
     if (filter === 'active') return batch.status === 'queued' || batch.status === 'processing';
     if (filter === 'ready') return batch.status === 'completed';
     if (filter === 'attention') return batch.status === 'failed' || batch.status === 'cancelled';
     return true;
-  }), [batches, filter]);
+  }).filter((batch) => !deferredQuery || batch.name.toLowerCase().includes(deferredQuery) || batch.jobs.some((job) => job.originalName.toLowerCase().includes(deferredQuery) || job.outputName.toLowerCase().includes(deferredQuery))), [batches, deferredQuery, filter]);
+  const counts = useMemo(() => batches.reduce((total, batch) => {
+    if (batch.status === 'queued' || batch.status === 'processing') total.active += 1;
+    else if (batch.status === 'completed') total.ready += 1;
+    else total.attention += 1;
+    return total;
+  }, { active: 0, ready: 0, attention: 0 }), [batches]);
   const filters: Array<{ value: QueueFilter; label: string }> = [
     { value: 'all', label: `All ${batches.length}` },
-    { value: 'active', label: 'Active' },
-    { value: 'ready', label: 'Ready' },
-    { value: 'attention', label: 'Attention' },
+    { value: 'active', label: `Active ${counts.active}` },
+    { value: 'ready', label: `Ready ${counts.ready}` },
+    { value: 'attention', label: `Attention ${counts.attention}` },
   ];
+
+  useEffect(() => {
+    const focusSearch = (event: globalThis.KeyboardEvent) => {
+      const target = event.target;
+      if (event.key === '/' && !(target instanceof HTMLInputElement) && !(target instanceof HTMLTextAreaElement) && !(target instanceof HTMLSelectElement)) {
+        event.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', focusSearch);
+    return () => window.removeEventListener('keydown', focusSearch);
+  }, []);
 
   return (
     <section className="queue-section" aria-labelledby="queue-heading">
@@ -57,8 +79,11 @@ export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onRen
           <span className="eyebrow">Render activity</span>
           <h2 id="queue-heading">Your output queue</h2>
         </div>
-        <div className="queue-filters" aria-label="Filter renders">
-          {filters.map((option) => <button type="button" key={option.value} className={filter === option.value ? 'selected' : ''} onClick={() => setFilter(option.value)}>{option.label}</button>)}
+        <div className="queue-tools">
+          <label className="queue-search"><Search size={13} /><input ref={searchRef} aria-label="Search render history" value={query} placeholder="Search renders" onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Escape') setQuery(''); }} />{query && <button type="button" aria-label="Clear render search" onClick={() => setQuery('')}><X size={12} /></button>}<kbd>/</kbd></label>
+          <div className="queue-filters" aria-label="Filter renders">
+            {filters.map((option) => <button type="button" key={option.value} className={filter === option.value ? 'selected' : ''} onClick={() => setFilter(option.value)}>{option.label}</button>)}
+          </div>
         </div>
       </div>
 
@@ -122,17 +147,19 @@ export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onRen
                       </div>
                       {previewOpen && (
                         <div className="video-test-panel">
-                          <VideoReview source={jobPreviewUrl(batch.id, job.id)} outputName={job.outputName} settings={job.settings} />
+                          <Suspense fallback={<div className="panel-loading"><span className="spinner" /> Loading preview…</div>}><VideoReview source={jobPreviewUrl(batch.id, job.id)} outputName={job.outputName} settings={job.settings} /></Suspense>
                         </div>
                       )}
                       {editorOpen && job.status === 'completed' && (
-                        <RenderedVideoEditor
-                          job={job}
-                          busy={busy}
-                          onRename={(outputName) => onRenameJob(batch.id, job.id, outputName)}
-                          onRerender={(outputName, settings) => onRerenderJob(batch.id, job.id, outputName, settings)}
-                          onClose={() => setEditorKey(null)}
-                        />
+                        <Suspense fallback={<div className="panel-loading"><span className="spinner" /> Loading editor…</div>}>
+                          <RenderedVideoEditor
+                            job={job}
+                            busy={busy}
+                            onRename={(outputName) => onRenameJob(batch.id, job.id, outputName)}
+                            onRerender={(outputName, settings) => onRerenderJob(batch.id, job.id, outputName, settings)}
+                            onClose={() => setEditorKey(null)}
+                          />
+                        </Suspense>
                       )}
                     </div>
                   );
