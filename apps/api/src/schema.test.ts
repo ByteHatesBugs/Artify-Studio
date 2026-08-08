@@ -63,6 +63,7 @@ describe('render settings validation', () => {
     expect(parsed.effects).toHaveLength(2);
     expect(parsed.effects[1]?.motion).toBe('pan-left');
     expect(parsed.effects[0]?.strength).toBe(50);
+    expect(parsed.effects[0]?.easing).toBe('cinematic');
   });
 
   it('validates independent effect strength', () => {
@@ -70,6 +71,13 @@ describe('render settings validation', () => {
     const excessive = createBatchSchema.safeParse({ ...validSettings, effects: JSON.stringify([{ motion: 'zoom-in', focus: 'center', strength: 101, effectStart: 0, effectEnd: 5 }]) });
     expect(strong.success && strong.data.effects[0]?.strength).toBe(85);
     expect(excessive.success).toBe(false);
+  });
+
+  it('validates professional per-effect motion curves', () => {
+    const eased = createBatchSchema.safeParse({ ...validSettings, effects: JSON.stringify([{ motion: 'zoom-in', focus: 'center', easing: 'ease-out', effectStart: 0, effectEnd: 5 }]) });
+    const invalid = createBatchSchema.safeParse({ ...validSettings, effects: JSON.stringify([{ motion: 'zoom-in', focus: 'center', easing: 'elastic', effectStart: 0, effectEnd: 5 }]) });
+    expect(eased.success && eased.data.effects[0]?.easing).toBe('ease-out');
+    expect(invalid.success).toBe(false);
   });
 
   it('accepts vertical and diagonal motion effects', () => {
