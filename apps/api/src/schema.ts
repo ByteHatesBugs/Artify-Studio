@@ -6,6 +6,7 @@ const hexColor = /^#[0-9a-fA-F]{6}$/;
 const effectSegmentSchema = z.object({
   motion: z.enum(MOTION_EFFECTS),
   focus: z.enum(EFFECT_FOCUSES).default('center'),
+  strength: z.coerce.number().min(0).max(100).default(50),
   effectStart: z.coerce.number().min(0).max(60),
   effectEnd: z.coerce.number().min(0.1).max(60),
 });
@@ -35,6 +36,7 @@ const renderSettingsShape = {
 const jobOverrideSchema = z.object({
   motion: z.enum(MOTION_EFFECTS).optional(),
   focus: z.enum(EFFECT_FOCUSES).optional(),
+  strength: z.coerce.number().min(0).max(100).optional(),
   effectStart: z.coerce.number().min(0).max(60).optional(),
   effectEnd: z.coerce.number().min(0.1).max(60).optional(),
   effects: effectsSchema.optional(),
@@ -84,6 +86,7 @@ const normalizeEffectTiming = (value: unknown) => {
     effects = [{
       motion: settings.motion ?? 'zoom-in',
       focus: settings.focus ?? 'center',
+      strength: 50,
       effectStart: settings.effectStart ?? 0,
       effectEnd: settings.effectEnd ?? settings.duration ?? 5,
     }];
