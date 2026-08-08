@@ -185,6 +185,9 @@ main { max-width: 1320px; margin: 0 auto; padding: 0 28px 100px; }
 .effect-segment-index strong { font-size: 9px; }
 .effect-segment > label > span, .effect-time-fields > span { height: 20px; display: flex; align-items: center; gap: 4px; color: #747378; font-size: 7px; text-transform: uppercase; letter-spacing: .4px; }
 .effect-segment select { width: 100%; height: 32px; padding: 0 7px; border: 1px solid var(--line); border-radius: 7px; color: #ddd; background: #0b0b0d; font-size: 8px; }
+.effect-segment > .effect-strength { grid-column: 1 / -1; padding: 7px 8px; border: 1px solid var(--line); border-radius: 7px; background: #0b0b0d; }
+.effect-strength > span { height: 18px; justify-content: space-between; }.effect-strength > span strong { margin-left: auto; color: var(--accent); font-size: 7px; }
+.effect-strength input { width: 100%; height: 16px; margin: 0; accent-color: var(--accent); cursor: pointer; }.effect-strength input:disabled { cursor: not-allowed; opacity: .35; }
 .effect-time-fields { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 66px auto 66px; align-items: end; gap: 6px; }
 .effect-time-fields > span { align-self: center; }
 .effect-time-fields > label { height: 30px; display: flex; align-items: center; border: 1px solid var(--line); border-radius: 7px; background: #0b0b0d; }
