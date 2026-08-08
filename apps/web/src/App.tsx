@@ -82,6 +82,8 @@ export default function App() {
   const [notice, setNotice] = useState<{ tone: 'error' | 'success'; message: string } | null>(null);
   const noticeTimerRef = useRef<number | undefined>(undefined);
   const refreshInFlightRef = useRef(false);
+  const batchSignatureRef = useRef('');
+  const submitRef = useRef<() => void>(() => undefined);
   const imagesRef = useRef(images);
   const audioRef = useRef(audio);
   imagesRef.current = images;
@@ -92,7 +94,11 @@ export default function App() {
     refreshInFlightRef.current = true;
     try {
       const data = await listBatches();
-      setBatches(data.batches);
+      const signature = data.batches.map((batch) => `${batch.id}:${batch.status}:${batch.progress}:${batch.jobs.map((job) => `${job.id}:${job.status}:${job.progress}:${job.outputName}`).join(',')}`).join('|');
+      if (signature !== batchSignatureRef.current) {
+        batchSignatureRef.current = signature;
+        setBatches(data.batches);
+      }
     } catch {
       // Keep the current queue visible during a brief server interruption.
     } finally {
@@ -126,12 +132,26 @@ export default function App() {
   }, [batches, refresh]);
 
   useEffect(() => {
-    try {
-      window.localStorage?.setItem('renderflow:render-settings', JSON.stringify(settings));
-    } catch {
-      // Private browsing and embedded contexts may disable local preferences.
-    }
+    const timer = window.setTimeout(() => {
+      try {
+        window.localStorage?.setItem('renderflow:render-settings', JSON.stringify(settings));
+      } catch {
+        // Private browsing and embedded contexts may disable local preferences.
+      }
+    }, 200);
+    return () => window.clearTimeout(timer);
   }, [settings]);
+
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+        event.preventDefault();
+        submitRef.current();
+      }
+    };
+    window.addEventListener('keydown', handleShortcut);
+    return () => window.removeEventListener('keydown', handleShortcut);
+  }, []);
 
   useEffect(() => () => {
     imagesRef.current.forEach((image) => URL.revokeObjectURL(image.previewUrl));
@@ -213,7 +233,7 @@ export default function App() {
   };
 
   const submit = async () => {
-    if (!images.length || isSubmitting) return;
+    if (!images.length || isSubmitting || !settings.name.trim() || health?.engine.ready !== true) return;
     setIsSubmitting(true);
     try {
       const { batch } = await createBatch(images, settings, audio);
@@ -228,6 +248,7 @@ export default function App() {
       setIsSubmitting(false);
     }
   };
+  submitRef.current = () => void submit();
 
   const setActionBusy = (id: string, busy: boolean) => setBusyIds((current) => {
     const next = new Set(current);
