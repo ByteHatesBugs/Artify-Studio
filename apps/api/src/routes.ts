@@ -233,6 +233,15 @@ apiRouter.get('/batches/:batchId/jobs/:jobId/preview', (request, response) => {
   return response.sendFile(job.outputPath);
 });
 
+apiRouter.get('/batches/:batchId/jobs/:jobId/audio', (request, response) => {
+  const batch = batchStore.get(request.params.batchId);
+  const job = batch?.jobs.find((candidate) => candidate.id === request.params.jobId);
+  if (!batch || !job?.audioPath || !job.audioName) return response.status(404).json({ error: 'Soundtrack not found.' });
+  response.setHeader('Content-Disposition', `inline; filename="${job.audioName.replace(/["\r\n]/g, '')}"`);
+  response.setHeader('Cache-Control', 'private, max-age=3600');
+  return response.sendFile(job.audioPath);
+});
+
 apiRouter.get('/batches/:batchId/download', async (request, response, next) => {
   const batch = batchStore.get(request.params.batchId);
   if (!batch) return response.status(404).json({ error: 'Batch not found.' });
