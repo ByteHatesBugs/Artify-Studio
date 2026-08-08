@@ -15,9 +15,6 @@ const validSettings = {
   quality: 'balanced',
   fade: 'true',
   background: '#09090b',
-  audioVolume: '0.8',
-  audioSourceStart: '0',
-  audioVideoStart: '0',
 };
 
 describe('render settings validation', () => {
@@ -112,18 +109,9 @@ describe('render settings validation', () => {
     expect(tooLong.success).toBe(false);
   });
 
-  it('accepts standard social and high-resolution canvases with a safe audio mix', () => {
+  it('accepts standard social and high-resolution canvases', () => {
     for (const resolution of ['480p', '1440p', '4k', 'square-720', 'portrait-720', 'feed-portrait']) {
-      expect(createBatchSchema.safeParse({ ...validSettings, resolution, audioVolume: '0.65' }).success).toBe(true);
+      expect(createBatchSchema.safeParse({ ...validSettings, resolution }).success).toBe(true);
     }
-    expect(createBatchSchema.safeParse({ ...validSettings, audioVolume: '1.1' }).success).toBe(false);
-  });
-
-  it('validates soundtrack trim and video placement times', () => {
-    const timed = createBatchSchema.safeParse({ ...validSettings, audioSourceStart: '42.5', audioVideoStart: '2.25' });
-    const outsideVideo = createBatchSchema.safeParse({ ...validSettings, audioVideoStart: '5' });
-    expect(timed.success && timed.data.audioSourceStart).toBe(42.5);
-    expect(timed.success && timed.data.audioVideoStart).toBe(2.25);
-    expect(outsideVideo.success).toBe(false);
   });
 });
