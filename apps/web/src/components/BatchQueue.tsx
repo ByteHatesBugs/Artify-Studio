@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { AlertCircle, Check, ChevronUp, CirclePlay, Download, Film, Inbox, LoaderCircle, RotateCcw, Square, Trash2, X } from 'lucide-react';
+import { AlertCircle, Check, ChevronUp, CirclePlay, Download, Film, Inbox, LoaderCircle, Pencil, RotateCcw, Square, Trash2, X } from 'lucide-react';
 import { batchDownloadUrl, jobDownloadUrl, jobPreviewUrl } from '../api';
-import type { Batch, JobStatus } from '../types';
+import type { Batch, JobStatus, RenderJob } from '../types';
 import { VideoReview } from './VideoReview';
+import { RenderedVideoEditor } from './RenderedVideoEditor';
 
 interface BatchQueueProps {
   batches: Batch[];
@@ -10,6 +11,8 @@ interface BatchQueueProps {
   busyIds: Set<string>;
   onCancel: (id: string) => void;
   onRetry: (id: string) => void;
+  onRenameJob: (batchId: string, jobId: string, outputName: string) => void;
+  onRerenderJob: (batchId: string, jobId: string, outputName: string, settings: RenderJob['settings']) => void;
   onDelete: (id: string) => void;
 }
 
@@ -30,9 +33,10 @@ const StatusIcon = ({ status }: { status: JobStatus }) => {
 
 type QueueFilter = 'all' | 'active' | 'ready' | 'attention';
 
-export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onDelete }: BatchQueueProps) {
+export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onRenameJob, onRerenderJob, onDelete }: BatchQueueProps) {
   const [filter, setFilter] = useState<QueueFilter>('all');
   const [previewKey, setPreviewKey] = useState<string | null>(null);
+  const [editorKey, setEditorKey] = useState<string | null>(null);
   const visibleBatches = useMemo(() => batches.filter((batch) => {
     if (filter === 'active') return batch.status === 'queued' || batch.status === 'processing';
     if (filter === 'ready') return batch.status === 'completed';
@@ -98,6 +102,7 @@ export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onDel
                 {batch.jobs.map((job) => {
                   const key = `${batch.id}:${job.id}`;
                   const previewOpen = previewKey === key;
+                  const editorOpen = editorKey === key;
                   const effectSummary = job.settings
                     ? `${job.settings.effects?.length ?? 1} effect${(job.settings.effects?.length ?? 1) === 1 ? '' : 's'} · full canvas`
                     : statusLabel[job.status];
@@ -109,7 +114,8 @@ export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onDel
                         <div className="job-mini-progress"><span style={{ width: `${job.progress}%` }} /></div>
                         {job.status === 'completed' ? (
                           <div className="job-actions">
-                            <button className={`icon-button ${previewOpen ? 'selected' : ''}`} type="button" aria-label={`${previewOpen ? 'Close' : 'Preview'} ${job.outputName}`} aria-expanded={previewOpen} onClick={() => setPreviewKey(previewOpen ? null : key)}>{previewOpen ? <ChevronUp size={15} /> : <CirclePlay size={16} />}</button>
+                            <button className={`icon-button ${previewOpen ? 'selected' : ''}`} type="button" aria-label={`${previewOpen ? 'Close' : 'Preview'} ${job.outputName}`} aria-expanded={previewOpen} onClick={() => { setEditorKey(null); setPreviewKey(previewOpen ? null : key); }}>{previewOpen ? <ChevronUp size={15} /> : <CirclePlay size={16} />}</button>
+                            <button className={`icon-button ${editorOpen ? 'selected' : ''}`} type="button" aria-label={`Edit ${job.outputName}`} aria-expanded={editorOpen} onClick={() => { setPreviewKey(null); setEditorKey(editorOpen ? null : key); }}><Pencil size={14} /></button>
                             <a className="icon-button" href={jobDownloadUrl(batch.id, job.id)} aria-label={`Download ${job.outputName}`}><Download size={15} /></a>
                           </div>
                         ) : <span className="job-percent">{job.progress}%</span>}
@@ -118,6 +124,15 @@ export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onDel
                         <div className="video-test-panel">
                           <VideoReview source={jobPreviewUrl(batch.id, job.id)} outputName={job.outputName} settings={job.settings} />
                         </div>
+                      )}
+                      {editorOpen && job.status === 'completed' && (
+                        <RenderedVideoEditor
+                          job={job}
+                          busy={busy}
+                          onRename={(outputName) => onRenameJob(batch.id, job.id, outputName)}
+                          onRerender={(outputName, settings) => onRerenderJob(batch.id, job.id, outputName, settings)}
+                          onClose={() => setEditorKey(null)}
+                        />
                       )}
                     </div>
                   );
