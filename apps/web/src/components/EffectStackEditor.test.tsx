@@ -6,7 +6,7 @@ import { EffectStackEditor } from './EffectStackEditor';
 afterEach(cleanup);
 
 describe('EffectStackEditor', () => {
-  it('adds a second effect and distributes both across the duration', () => {
+  it('adds a second effect without changing the first effect duration', () => {
     const onChange = vi.fn();
     render(
       <EffectStackEditor
@@ -18,8 +18,22 @@ describe('EffectStackEditor', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /add effect/i }));
     expect(onChange).toHaveBeenCalledWith([
+      { motion: 'zoom-in', focus: 'center', strength: 50, effectStart: 0, effectEnd: 6 },
+      { motion: 'pan-right', focus: 'center', strength: 50, effectStart: 3, effectEnd: 6 },
+    ]);
+  });
+
+  it('allows overlapping times and keeps the first effect bar unchanged', () => {
+    const onChange = vi.fn();
+    const effects = [
       { motion: 'zoom-in', focus: 'center', strength: 50, effectStart: 0, effectEnd: 3 },
       { motion: 'pan-right', focus: 'center', strength: 50, effectStart: 3, effectEnd: 6 },
+    ] as const;
+    render(<EffectStackEditor duration={6} effects={[...effects]} onChange={onChange} />);
+    fireEvent.change(screen.getByRole('spinbutton', { name: /effect 1 end/i }), { target: { value: '5' } });
+    expect(onChange).toHaveBeenCalledWith([
+      { ...effects[0], effectEnd: 5 },
+      effects[1],
     ]);
   });
 
