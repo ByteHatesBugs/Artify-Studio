@@ -78,7 +78,7 @@ export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onRen
           const completedCount = batch.jobs.filter((job) => job.status === 'completed').length;
           const retryableCount = batch.jobs.filter((job) => job.status === 'failed' || job.status === 'cancelled').length;
           return (
-            <article className="batch-card" key={batch.id}>
+            <article className={`batch-card status-${batch.status}`} key={batch.id}>
               <div className="batch-topline">
                 <div className="batch-title">
                   <span className="batch-icon"><Film size={19} /></span>
@@ -95,7 +95,7 @@ export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onRen
                 </div>
               </div>
               <div className="batch-progress-row">
-                <div className="progress-track"><span style={{ width: `${batch.progress}%` }} /></div>
+                <div className={`progress-track ${active ? 'is-active' : ''}`} role="progressbar" aria-label={`${batch.name} render progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={batch.progress}><span style={{ width: `${batch.progress}%` }} /></div>
                 <strong>{batch.progress}%</strong>
               </div>
               <div className="job-list">
@@ -108,7 +108,7 @@ export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onRen
                     : statusLabel[job.status];
                   return (
                     <div className="job-item" key={job.id}>
-                      <div className="job-row">
+                      <div className={`job-row status-${job.status}`}>
                         <div className={`job-status ${job.status}`}><StatusIcon status={job.status} /></div>
                         <div className="job-name"><strong>{job.originalName}</strong><span title={job.error}>{job.error || `${statusLabel[job.status]} · ${effectSummary} · Attempt ${job.attempts || 0}`}</span></div>
                         <div className="job-mini-progress"><span style={{ width: `${job.progress}%` }} /></div>
