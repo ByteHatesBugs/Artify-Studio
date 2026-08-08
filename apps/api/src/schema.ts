@@ -28,6 +28,7 @@ const renderSettingsShape = {
   quality: z.enum(QUALITY_PROFILES).default('balanced'),
   fade: z.preprocess((value) => value === true || value === 'true', z.boolean()).default(true),
   background: z.string().regex(hexColor).default('#09090b'),
+  audioVolume: z.coerce.number().min(0).max(1).default(0.8),
   effects: effectsSchema,
 };
 
