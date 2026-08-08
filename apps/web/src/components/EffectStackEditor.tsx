@@ -1,4 +1,4 @@
-import { Blend, Clock3, Focus, Gauge, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { Blend, Clock3, FastForward, Focus, Gauge, Plus, Sparkles, Trash2 } from 'lucide-react';
 import type { EffectSegment } from '../types';
 
 interface EffectStackEditorProps {
@@ -64,6 +64,7 @@ export function EffectStackEditor({ effects, duration, compact = false, disabled
       focus: 'center' as const,
       strength: 50,
       easing: 'cinematic',
+      speed: 1,
       effectStart: roundTime(effectStart),
       effectEnd: roundTime(effectEnd),
     }]);
@@ -87,7 +88,7 @@ export function EffectStackEditor({ effects, duration, compact = false, disabled
             key={`${effect.motion}-${index}`}
             className={`effect-color-${index % 4}`}
             style={{ left: `${(effect.effectStart / duration) * 100}%`, width: `${((effect.effectEnd - effect.effectStart) / duration) * 100}%`, top: `${index * 19 + 3}px` }}
-            title={`${index + 1}. ${effect.motion.replaceAll('-', ' ')} · ${effect.easing ?? 'cinematic'} curve · ${effect.strength}% strength · ${effect.effectStart}s–${effect.effectEnd}s`}
+            title={`${index + 1}. ${effect.motion.replaceAll('-', ' ')} · ${effect.easing ?? 'cinematic'} curve · ${effect.strength}% strength · ${effect.speed ?? 1}× speed · ${effect.effectStart}s–${effect.effectEnd}s`}
           ><i>{index + 1}</i></span>
         ))}
       </div>
@@ -102,6 +103,7 @@ export function EffectStackEditor({ effects, duration, compact = false, disabled
               <label><span><Focus size={11} /> Focus</span><select value={effect.focus} onChange={(event) => updateEffect(index, { focus: event.target.value as EffectSegment['focus'] })} disabled={disabled}>{focusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
               <label><span><Blend size={11} /> Motion curve</span><select aria-label={`Effect ${index + 1} motion curve`} value={effect.easing ?? 'cinematic'} onChange={(event) => updateEffect(index, { easing: event.target.value as NonNullable<EffectSegment['easing']> })} disabled={disabled || effect.motion === 'still'}>{easingOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
               <label className="effect-strength"><span><Gauge size={11} /> Strength <strong>{effect.motion === 'still' ? 'Off' : `${effect.strength}%`}</strong></span><input aria-label={`Effect ${index + 1} strength`} type="range" min={0} max={100} step={5} value={effect.strength} onChange={(event) => updateEffect(index, { strength: Number(event.target.value) })} disabled={disabled || effect.motion === 'still'} /></label>
+              <label className="effect-speed"><span><FastForward size={11} /> Speed <strong>{effect.motion === 'still' ? 'Off' : `${effect.speed ?? 1}×`}</strong></span><input aria-label={`Effect ${index + 1} speed`} type="range" min={0.25} max={3} step={0.25} value={effect.speed ?? 1} onChange={(event) => updateEffect(index, { speed: Number(event.target.value) })} disabled={disabled || effect.motion === 'still'} /></label>
               <div className="effect-time-fields">
                 <span><Clock3 size={11} /> Timing</span>
                 <label><input aria-label={`Effect ${index + 1} start`} type="number" min={0} max={effect.effectEnd - 0.05} step={0.05} value={effect.effectStart} onChange={(event) => updateEffect(index, { effectStart: Number(event.target.value) })} disabled={disabled} /><small>s</small></label>
