@@ -11,11 +11,11 @@ Object.defineProperty(window, 'localStorage', {
 vi.stubGlobal('fetch', vi.fn().mockImplementation(async (input: RequestInfo | URL) => ({
   ok: true,
   json: async () => String(input).includes('/api/health')
-    ? { status: 'ok', service: 'artify-api', engine: { ready: true, checkedAt: new Date().toISOString() }, timestamp: new Date().toISOString() }
+    ? { status: 'ok', service: 'renderflow-api', engine: { ready: true, checkedAt: new Date().toISOString() }, timestamp: new Date().toISOString() }
     : { batches: [] },
 })));
 
-describe('Artify Studio', () => {
+describe('RenderFlow', () => {
   it('renders the upload workspace and disabled empty render action', async () => {
     render(<App />);
     expect(screen.getByRole('heading', { name: /still images/i })).toBeTruthy();
