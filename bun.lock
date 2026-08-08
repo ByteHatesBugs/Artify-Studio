@@ -3,13 +3,13 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "artify-studio",
+      "name": "renderflow",
       "devDependencies": {
         "concurrently": "^9.2.0",
       },
     },
     "apps/api": {
-      "name": "@artify/api",
+      "name": "@renderflow/api",
       "version": "1.0.0",
       "dependencies": {
         "archiver": "^7.0.1",
@@ -32,7 +32,7 @@
       },
     },
     "apps/web": {
-      "name": "@artify/web",
+      "name": "@renderflow/web",
       "version": "1.0.0",
       "dependencies": {
         "@vitejs/plugin-react": "^4.7.0",
@@ -52,9 +52,9 @@
     },
   },
   "packages": {
-    "@artify/api": ["@artify/api@workspace:apps/api"],
+    "@renderflow/api": ["@renderflow/api@workspace:apps/api"],
 
-    "@artify/web": ["@artify/web@workspace:apps/web"],
+    "@renderflow/web": ["@renderflow/web@workspace:apps/web"],
 
     "@asamuzakjp/css-color": ["@asamuzakjp/css-color@3.2.0", "", { "dependencies": { "@csstools/css-calc": "^2.1.3", "@csstools/css-color-parser": "^3.0.9", "@csstools/css-parser-algorithms": "^3.0.4", "@csstools/css-tokenizer": "^3.0.3", "lru-cache": "^10.4.3" } }, "sha512-K1A6z8tS3XsmCMM86xoWdn7Fkdn9m6RSVtocUrJYIwZnFVkng/PvkEoWtOWmP+Scc6saYWHWZYbndEEXxl24jw=="],
 
