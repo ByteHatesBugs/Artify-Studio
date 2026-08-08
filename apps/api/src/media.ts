@@ -32,20 +32,28 @@ const focusPosition = (focus: EffectSegment['focus']) => ({
   y: focus === 'top' ? 0 : focus === 'bottom' ? 1 : 0.5,
 });
 
+const strengthRatio = (effect: EffectSegment) => Math.max(0, Math.min(1, (effect.strength ?? 50) / 100));
+const effectZoom = (effect: EffectSegment) => 1 + 0.12 * strengthRatio(effect);
+const panRange = (effect: EffectSegment) => strengthRatio(effect) / 2;
+
 const initialMotionState = (effect: EffectSegment): MotionState => {
   const focus = focusPosition(effect.focus);
+  const zoom = effectZoom(effect);
+  const range = panRange(effect);
   return {
-    zoom: effect.motion === 'zoom-out' || effect.motion.startsWith('pan-') ? 1.08 : 1,
-    x: effect.motion === 'pan-left' ? 1 : effect.motion === 'pan-right' ? 0 : focus.x,
+    zoom: effect.motion === 'zoom-out' || effect.motion.startsWith('pan-') ? zoom : 1,
+    x: effect.motion === 'pan-left' ? 0.5 + range : effect.motion === 'pan-right' ? 0.5 - range : focus.x,
     y: focus.y,
   };
 };
 
 const targetMotionState = (effect: EffectSegment, current: MotionState): MotionState => {
   const focus = focusPosition(effect.focus);
+  const zoom = effectZoom(effect);
+  const range = panRange(effect);
   return {
-    zoom: effect.motion === 'zoom-in' || effect.motion.startsWith('pan-') ? 1.08 : effect.motion === 'zoom-out' ? 1 : current.zoom,
-    x: effect.motion === 'pan-left' ? 0 : effect.motion === 'pan-right' ? 1 : focus.x,
+    zoom: effect.motion === 'zoom-in' || effect.motion.startsWith('pan-') ? zoom : effect.motion === 'zoom-out' ? 1 : current.zoom,
+    x: effect.motion === 'pan-left' ? 0.5 - range : effect.motion === 'pan-right' ? 0.5 + range : focus.x,
     y: focus.y,
   };
 };
@@ -58,10 +66,11 @@ export const buildVideoFilter = (settings: RenderSettings) => {
   const effects = settings.effects?.length ? settings.effects : [{
     motion: settings.motion,
     focus: settings.focus ?? 'center',
+    strength: 50,
     effectStart: settings.effectStart,
     effectEnd: settings.effectEnd,
   }];
-  const workingScale = effects.every((effect) => effect.motion === 'still') ? 1 : 1.12;
+  const workingScale = effects.every((effect) => effect.motion === 'still') ? 1 : width >= 3840 ? 1.25 : 1.5;
   const canvasWidth = Math.ceil((width * workingScale) / 2) * 2;
   const canvasHeight = Math.ceil((height * workingScale) / 2) * 2;
   const focus = effects[0]?.focus ?? settings.focus ?? 'center';
@@ -70,8 +79,8 @@ export const buildVideoFilter = (settings: RenderSettings) => {
   const horizontalPad = focus === 'left' ? '0' : focus === 'right' ? 'ow-iw' : '(ow-iw)/2';
   const verticalPad = focus === 'top' ? '0' : focus === 'bottom' ? 'oh-ih' : '(oh-ih)/2';
   const base = settings.fit === 'cover'
-    ? `scale=${canvasWidth}:${canvasHeight}:force_original_aspect_ratio=increase,crop=${canvasWidth}:${canvasHeight}:${horizontalCrop}:${verticalCrop}`
-    : `scale=${canvasWidth}:${canvasHeight}:force_original_aspect_ratio=decrease,pad=${canvasWidth}:${canvasHeight}:${horizontalPad}:${verticalPad}:${settings.background}`;
+    ? `scale=${canvasWidth}:${canvasHeight}:force_original_aspect_ratio=increase:flags=lanczos,crop=${canvasWidth}:${canvasHeight}:${horizontalCrop}:${verticalCrop}`
+    : `scale=${canvasWidth}:${canvasHeight}:force_original_aspect_ratio=decrease:flags=lanczos,pad=${canvasWidth}:${canvasHeight}:${horizontalPad}:${verticalPad}:${settings.background}`;
   const fadeDuration = Math.min(0.5, settings.duration / 4);
   const fades = settings.fade
     ? `,fade=t=in:st=0:d=${fadeDuration},fade=t=out:st=${Math.max(0, settings.duration - fadeDuration)}:d=${fadeDuration}`
@@ -109,7 +118,7 @@ export const buildVideoFilter = (settings: RenderSettings) => {
   const x = `(iw-iw/zoom)*(${xFactor})`;
   const y = `(ih-ih/zoom)*(${yFactor})`;
 
-  return `${base},zoompan=z='${zoom}':x='${x}':y='${y}':d=${frames}:s=${width}x${height}:fps=${settings.fps}${fades},format=yuv420p`;
+  return `${base},zoompan=z='${zoom}':x='${x}':y='${y}':d=${frames}:s=${width}x${height}:fps=${settings.fps}${fades},setsar=1,format=yuv420p`;
 };
 
 export const buildFfmpegArgs = (job: RenderJob) => {
