@@ -17,7 +17,7 @@ Object.defineProperty(window, 'localStorage', {
 
 const settings: Batch['settings'] = {
   duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '1080p', motion: 'zoom-in', focus: 'center',
-  format: 'mp4', fit: 'cover', quality: 'balanced', fade: true, background: '#09090b', audioVolume: 0.8, audioSourceStart: 0, audioVideoStart: 0,
+  format: 'mp4', fit: 'cover', quality: 'balanced', fade: true, background: '#09090b',
   effects: [{ motion: 'zoom-in', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 }],
 };
 
