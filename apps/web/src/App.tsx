@@ -315,6 +315,7 @@ export default function App() {
 
   return (
     <div className="app-shell" id="top">
+      <a className="skip-link" href="#workspace">Skip to editor</a>
       <header className="topbar">
         <Logo />
         <nav aria-label="Primary navigation">
