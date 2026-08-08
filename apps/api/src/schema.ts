@@ -8,6 +8,7 @@ const effectSegmentSchema = z.object({
   focus: z.enum(EFFECT_FOCUSES).default('center'),
   strength: z.coerce.number().min(0).max(100).default(50),
   easing: z.enum(EFFECT_EASINGS).default('cinematic'),
+  speed: z.coerce.number().min(0.25).max(3).default(1),
   effectStart: z.coerce.number().min(0).max(60),
   effectEnd: z.coerce.number().min(0.1).max(60),
 });
@@ -38,6 +39,7 @@ const jobOverrideSchema = z.object({
   focus: z.enum(EFFECT_FOCUSES).optional(),
   strength: z.coerce.number().min(0).max(100).optional(),
   easing: z.enum(EFFECT_EASINGS).optional(),
+  speed: z.coerce.number().min(0.25).max(3).optional(),
   effectStart: z.coerce.number().min(0).max(60).optional(),
   effectEnd: z.coerce.number().min(0.1).max(60).optional(),
   effects: effectsSchema.optional(),
@@ -86,6 +88,7 @@ const normalizeEffectTiming = (value: unknown) => {
       focus: settings.focus ?? 'center',
       strength: 50,
       easing: 'cinematic',
+      speed: 1,
       effectStart: settings.effectStart ?? 0,
       effectEnd: settings.effectEnd ?? settings.duration ?? 5,
     }];
