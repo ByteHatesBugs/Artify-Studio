@@ -1,4 +1,4 @@
-import { Clock3, Focus, Gauge, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { Blend, Clock3, Focus, Gauge, Plus, Sparkles, Trash2 } from 'lucide-react';
 import type { EffectSegment } from '../types';
 
 interface EffectStackEditorProps {
@@ -9,23 +9,30 @@ interface EffectStackEditorProps {
   onChange: (effects: EffectSegment[]) => void;
 }
 
-const motionOptions: Array<{ value: EffectSegment['motion']; label: string }> = [
-  { value: 'zoom-in', label: 'Slow zoom in' },
-  { value: 'zoom-out', label: 'Slow zoom out' },
-  { value: 'pan-left', label: 'Pan left' },
-  { value: 'pan-right', label: 'Pan right' },
-  { value: 'pan-up', label: 'Pan up' },
-  { value: 'pan-down', label: 'Pan down' },
-  { value: 'drift-up-left', label: 'Drift up left' },
-  { value: 'drift-up-right', label: 'Drift up right' },
-  { value: 'drift-down-left', label: 'Drift down left' },
-  { value: 'drift-down-right', label: 'Drift down right' },
-  { value: 'still', label: 'Hold frame' },
+const motionOptions: Array<{ value: EffectSegment['motion']; label: string; detail: string }> = [
+  { value: 'zoom-in', label: 'Cinematic push in', detail: 'Draw attention gently toward the focal point.' },
+  { value: 'zoom-out', label: 'Cinematic pull out', detail: 'Reveal more of the frame with a measured pull back.' },
+  { value: 'pan-left', label: 'Pan left', detail: 'Travel horizontally toward the left edge.' },
+  { value: 'pan-right', label: 'Pan right', detail: 'Travel horizontally toward the right edge.' },
+  { value: 'pan-up', label: 'Rising pan', detail: 'Move upward for an elevated, aspirational feel.' },
+  { value: 'pan-down', label: 'Descending pan', detail: 'Move downward to reveal lower-frame detail.' },
+  { value: 'drift-up-left', label: 'Drift ↖ upper left', detail: 'A subtle diagonal move toward the upper left.' },
+  { value: 'drift-up-right', label: 'Drift ↗ upper right', detail: 'A subtle diagonal move toward the upper right.' },
+  { value: 'drift-down-left', label: 'Drift ↙ lower left', detail: 'A subtle diagonal move toward the lower left.' },
+  { value: 'drift-down-right', label: 'Drift ↘ lower right', detail: 'A subtle diagonal move toward the lower right.' },
+  { value: 'still', label: 'Locked frame', detail: 'Hold a precise static composition.' },
 ];
 
 const focusOptions: Array<{ value: EffectSegment['focus']; label: string }> = [
   { value: 'center', label: 'Center' }, { value: 'top', label: 'Top' }, { value: 'bottom', label: 'Bottom' },
   { value: 'left', label: 'Left' }, { value: 'right', label: 'Right' },
+];
+const easingOptions: Array<{ value: NonNullable<EffectSegment['easing']>; label: string }> = [
+  { value: 'cinematic', label: 'Cinematic' },
+  { value: 'ease-in-out', label: 'Smooth' },
+  { value: 'ease-in', label: 'Ease in' },
+  { value: 'ease-out', label: 'Ease out' },
+  { value: 'linear', label: 'Linear' },
 ];
 
 const roundTime = (value: number) => Number(value.toFixed(2));
@@ -56,6 +63,7 @@ export function EffectStackEditor({ effects, duration, compact = false, disabled
       motion: motions[effects.length % motions.length]!,
       focus: 'center' as const,
       strength: 50,
+      easing: 'cinematic',
       effectStart: roundTime(effectStart),
       effectEnd: roundTime(effectEnd),
     }]);
@@ -69,7 +77,7 @@ export function EffectStackEditor({ effects, duration, compact = false, disabled
   return (
     <div className={`effect-stack-editor ${compact ? 'compact' : ''}`}>
       <div className="effect-stack-heading">
-        <div><Sparkles size={14} /><span><strong>Effect timeline</strong><small>{effects.length} effect{effects.length === 1 ? '' : 's'} · earlier effects win overlaps</small></span></div>
+        <div><Sparkles size={14} /><span><strong>Precision motion timeline</strong><small>{effects.length} effect{effects.length === 1 ? '' : 's'} · earlier effects win overlaps</small></span></div>
         <button type="button" onClick={addEffect} disabled={disabled || effects.length >= 8}><Plus size={13} /> Add effect</button>
       </div>
 
@@ -79,7 +87,7 @@ export function EffectStackEditor({ effects, duration, compact = false, disabled
             key={`${effect.motion}-${index}`}
             className={`effect-color-${index % 4}`}
             style={{ left: `${(effect.effectStart / duration) * 100}%`, width: `${((effect.effectEnd - effect.effectStart) / duration) * 100}%`, top: `${index * 19 + 3}px` }}
-            title={`${index + 1}. ${effect.motion.replace('-', ' ')} · ${effect.strength}% strength · ${effect.effectStart}s–${effect.effectEnd}s`}
+            title={`${index + 1}. ${effect.motion.replaceAll('-', ' ')} · ${effect.easing ?? 'cinematic'} curve · ${effect.strength}% strength · ${effect.effectStart}s–${effect.effectEnd}s`}
           ><i>{index + 1}</i></span>
         ))}
       </div>
@@ -89,8 +97,10 @@ export function EffectStackEditor({ effects, duration, compact = false, disabled
           return (
             <article className="effect-segment" key={`${effect.motion}-${index}`}>
               <div className="effect-segment-index"><span className={`effect-color-${index % 4}`}>{index + 1}</span><strong>Effect {index + 1}</strong><small>Priority {index + 1}</small></div>
+              <p className="effect-preset-note">{motionOptions.find((option) => option.value === effect.motion)?.detail}</p>
               <label><span><Sparkles size={11} /> Motion</span><select value={effect.motion} onChange={(event) => updateEffect(index, { motion: event.target.value as EffectSegment['motion'] })} disabled={disabled}>{motionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
               <label><span><Focus size={11} /> Focus</span><select value={effect.focus} onChange={(event) => updateEffect(index, { focus: event.target.value as EffectSegment['focus'] })} disabled={disabled}>{focusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+              <label><span><Blend size={11} /> Motion curve</span><select aria-label={`Effect ${index + 1} motion curve`} value={effect.easing ?? 'cinematic'} onChange={(event) => updateEffect(index, { easing: event.target.value as NonNullable<EffectSegment['easing']> })} disabled={disabled || effect.motion === 'still'}>{easingOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
               <label className="effect-strength"><span><Gauge size={11} /> Strength <strong>{effect.motion === 'still' ? 'Off' : `${effect.strength}%`}</strong></span><input aria-label={`Effect ${index + 1} strength`} type="range" min={0} max={100} step={5} value={effect.strength} onChange={(event) => updateEffect(index, { strength: Number(event.target.value) })} disabled={disabled || effect.motion === 'still'} /></label>
               <div className="effect-time-fields">
                 <span><Clock3 size={11} /> Timing</span>
