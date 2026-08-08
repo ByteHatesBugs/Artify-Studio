@@ -39,6 +39,8 @@ export interface RenderSettings {
   fade: boolean;
   background: string;
   audioVolume: number;
+  audioSourceStart: number;
+  audioVideoStart: number;
   effects: EffectSegment[];
 }
 
