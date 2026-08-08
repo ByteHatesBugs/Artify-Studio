@@ -19,7 +19,7 @@ describe('EffectStackEditor', () => {
     fireEvent.click(screen.getByRole('button', { name: /add effect/i }));
     expect(onChange).toHaveBeenCalledWith([
       { motion: 'zoom-in', focus: 'center', strength: 50, effectStart: 0, effectEnd: 6 },
-      { motion: 'pan-right', focus: 'center', strength: 50, effectStart: 3, effectEnd: 6 },
+      { motion: 'pan-right', focus: 'center', strength: 50, easing: 'cinematic', effectStart: 3, effectEnd: 6 },
     ]);
   });
 
@@ -47,10 +47,17 @@ describe('EffectStackEditor', () => {
   it('offers vertical and diagonal motion effects', () => {
     const onChange = vi.fn();
     render(<EffectStackEditor duration={5} effects={[{ motion: 'zoom-in', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 }]} onChange={onChange} />);
-    const motion = screen.getByRole('combobox', { name: /motion/i });
-    expect(screen.getByRole('option', { name: 'Pan up' })).not.toBeNull();
-    expect(screen.getByRole('option', { name: 'Drift down right' })).not.toBeNull();
+    const motion = screen.getByRole('combobox', { name: /^motion$/i });
+    expect(screen.getByRole('option', { name: 'Rising pan' })).not.toBeNull();
+    expect(screen.getByRole('option', { name: /Drift .* lower right/ })).not.toBeNull();
     fireEvent.change(motion, { target: { value: 'drift-down-right' } });
     expect(onChange).toHaveBeenCalledWith([{ motion: 'drift-down-right', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 }]);
+  });
+
+  it('applies an independent professional motion curve', () => {
+    const onChange = vi.fn();
+    render(<EffectStackEditor duration={5} effects={[{ motion: 'zoom-in', focus: 'center', strength: 50, easing: 'cinematic', effectStart: 0, effectEnd: 5 }]} onChange={onChange} />);
+    fireEvent.change(screen.getByRole('combobox', { name: /effect 1 motion curve/i }), { target: { value: 'ease-out' } });
+    expect(onChange).toHaveBeenCalledWith([{ motion: 'zoom-in', focus: 'center', strength: 50, easing: 'ease-out', effectStart: 0, effectEnd: 5 }]);
   });
 });
