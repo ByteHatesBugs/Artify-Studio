@@ -19,7 +19,6 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Video durations from 1 to 60 seconds
 - Per-image effect-stack overrides on top of reusable batch defaults
 - Enforced edge-to-edge cover framing for screen-filling final output
-- Optional batch soundtrack upload with looping, preview, and adjustable mix volume
 - Draft, balanced, and high encoding profiles that change FFmpeg speed and output quality
 - Optional fade-in and fade-out transitions for polished clips
 - Persistent preferences and quick profiles for common campaign, social, and lightweight outputs
@@ -37,7 +36,6 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Locally bundled Inter and Manrope variable typography with no external font dependency
 - Searchable render history, live status counts, `/` search focus, and `Ctrl/Command + Enter` rendering
 - Persistent render searches with saved filters, recent terms, and live name suggestions
-- Waveform soundtrack trimming and precise placement on the video timeline, including completed-video edits
 - Lazy preview decoding and viewport-aware rendering for smooth large-batch editing
 - Lazy-loaded review/editor panels, deduplicated polling updates, deferred preference saves, and throttled preview updates
 - Automatic input cleanup and configurable output retention
@@ -160,7 +158,7 @@ Then open `http://localhost:8787`.
 | `CLIENT_ORIGIN` | `http://localhost:5173` | Allowed development web origin |
 | `FFMPEG_PATH` | `ffmpeg` | FFmpeg executable path |
 | `STORAGE_DIR` | `./storage` | Runtime media directory |
-| `MAX_FILE_SIZE_MB` | `25` | Maximum size of one source image or soundtrack |
+| `MAX_FILE_SIZE_MB` | `25` | Maximum size of one source image |
 | `MAX_BATCH_SIZE` | `50` | Maximum images accepted in one request |
 | `QUEUE_CONCURRENCY` | `1` | Simultaneous FFmpeg processes; conservative by default to keep the UI responsive |
 | `JOB_TTL_HOURS` | `24` | Retention window for render results |
@@ -171,7 +169,7 @@ Keep `QUEUE_CONCURRENCY` conservative. Full HD video encoding is CPU- and memory
 
 - `GET /api/health` — service health
 - `GET /api/batches` — current server-local batch history
-- `POST /api/batches` — create a multipart render batch with images and an optional audio track
+- `POST /api/batches` — create a multipart render batch from images
 - `POST /api/batches/:batchId/cancel` — cancel queued and active work
 - `POST /api/batches/:batchId/retry` — retry failed or cancelled jobs with retained sources
 - `GET /api/batches/:batchId/download` — download completed videos as a ZIP
