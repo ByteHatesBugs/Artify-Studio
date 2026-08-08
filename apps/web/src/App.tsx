@@ -6,7 +6,9 @@ import { ConfirmDialog } from './components/ConfirmDialog';
 import { Logo } from './components/Logo';
 import { SettingsPanel } from './components/SettingsPanel';
 import { UploadZone } from './components/UploadZone';
-import type { Batch, HealthStatus, RenderSettings, SelectedImage } from './types';
+import type { Batch, EffectSegment, HealthStatus, RenderSettings, SelectedImage } from './types';
+
+const initialEffect: EffectSegment = { motion: 'zoom-in', focus: 'center', effectStart: 0, effectEnd: 5 };
 
 const initialSettings: RenderSettings = {
   name: 'Campaign motion set',
@@ -18,20 +20,44 @@ const initialSettings: RenderSettings = {
   motion: 'zoom-in',
   focus: 'center',
   format: 'mp4',
-  fit: 'contain',
+  fit: 'cover',
   quality: 'balanced',
   fade: true,
   background: '#09090b',
+  effects: [initialEffect],
+};
+
+const normalizeEffectStack = (effects: EffectSegment[] | undefined, duration: number, fallback = initialEffect) => {
+  const source = effects?.length ? effects.slice(0, 8) : [{ ...fallback, effectEnd: duration }];
+  const normalized: EffectSegment[] = [];
+  for (const effect of [...source].sort((left, right) => left.effectStart - right.effectStart)) {
+    const previousEnd = normalized.at(-1)?.effectEnd ?? 0;
+    const effectStart = Math.max(previousEnd, Math.min(effect.effectStart, duration - 0.05));
+    const effectEnd = Math.min(duration, Math.max(effect.effectEnd, effectStart + 0.05));
+    if (effectStart >= duration || effectEnd <= effectStart) continue;
+    normalized.push({ ...effect, effectStart: Number(effectStart.toFixed(2)), effectEnd: Number(effectEnd.toFixed(2)) });
+  }
+  return normalized.length ? normalized : [{ ...fallback, effectStart: 0, effectEnd: duration }];
 };
 
 const loadSettings = (): RenderSettings => {
   try {
     const saved = JSON.parse(localStorage.getItem('renderflow:render-settings') ?? '{}') as Partial<RenderSettings>;
-    const merged = { ...initialSettings, ...saved };
+    const merged = { ...initialSettings, ...saved, fit: saved.effects?.length ? saved.fit ?? initialSettings.fit : 'cover' as const };
+    const effects = normalizeEffectStack(saved.effects, merged.duration, {
+      motion: merged.motion,
+      focus: merged.focus,
+      effectStart: merged.effectStart,
+      effectEnd: merged.effectEnd,
+    });
+    const primary = effects[0]!;
     return {
       ...merged,
-      effectStart: Math.max(0, Math.min(merged.effectStart, merged.duration - 0.1)),
-      effectEnd: Math.max(0.1, Math.min(merged.effectEnd, merged.duration)),
+      motion: primary.motion,
+      focus: primary.focus,
+      effectStart: primary.effectStart,
+      effectEnd: primary.effectEnd,
+      effects,
     };
   } catch {
     return initialSettings;
@@ -140,12 +166,13 @@ export default function App() {
   };
 
   const changeSettings = (next: RenderSettings) => {
-    setSettings(next);
+    const effects = normalizeEffectStack(next.effects, next.duration);
+    const primary = effects[0]!;
+    const normalizedNext = { ...next, effects, motion: primary.motion, focus: primary.focus, effectStart: primary.effectStart, effectEnd: primary.effectEnd };
+    setSettings(normalizedNext);
     setImages((current) => current.map((image) => {
       if (!image.effectOverride) return image;
-      const effectEnd = Math.min(image.effectOverride.effectEnd, next.duration);
-      const effectStart = Math.min(image.effectOverride.effectStart, Math.max(0, effectEnd - 0.1));
-      return { ...image, effectOverride: { ...image.effectOverride, effectStart, effectEnd } };
+      return { ...image, effectOverride: { effects: normalizeEffectStack(image.effectOverride.effects, normalizedNext.duration, primary) } };
     }));
   };
 
