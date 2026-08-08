@@ -1,4 +1,4 @@
-import { Clock3, Focus, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { Clock3, Focus, Gauge, Plus, Sparkles, Trash2 } from 'lucide-react';
 import type { EffectSegment } from '../types';
 
 interface EffectStackEditorProps {
@@ -45,7 +45,7 @@ export function EffectStackEditor({ effects, duration, compact = false, disabled
   const addEffect = () => {
     if (effects.length >= 8) return;
     const motions: EffectSegment['motion'][] = ['zoom-in', 'pan-right', 'zoom-out', 'pan-left'];
-    const expanded = [...effects, { motion: motions[effects.length % motions.length]!, focus: 'center' as const, effectStart: 0, effectEnd: duration }];
+    const expanded = [...effects, { motion: motions[effects.length % motions.length]!, focus: 'center' as const, strength: 50, effectStart: 0, effectEnd: duration }];
     const slice = duration / expanded.length;
     onChange(expanded.map((effect, index) => ({
       ...effect,
@@ -72,7 +72,7 @@ export function EffectStackEditor({ effects, duration, compact = false, disabled
             key={`${effect.motion}-${index}`}
             className={`effect-color-${index % 4}`}
             style={{ left: `${(effect.effectStart / duration) * 100}%`, width: `${((effect.effectEnd - effect.effectStart) / duration) * 100}%` }}
-            title={`${index + 1}. ${effect.motion.replace('-', ' ')}: ${effect.effectStart}s–${effect.effectEnd}s`}
+            title={`${index + 1}. ${effect.motion.replace('-', ' ')} · ${effect.strength}% strength · ${effect.effectStart}s–${effect.effectEnd}s`}
           ><i>{index + 1}</i></span>
         ))}
       </div>
@@ -86,6 +86,7 @@ export function EffectStackEditor({ effects, duration, compact = false, disabled
               <div className="effect-segment-index"><span className={`effect-color-${index % 4}`}>{index + 1}</span><strong>Effect {index + 1}</strong></div>
               <label><span><Sparkles size={11} /> Motion</span><select value={effect.motion} onChange={(event) => updateEffect(index, { motion: event.target.value as EffectSegment['motion'] })} disabled={disabled}>{motionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
               <label><span><Focus size={11} /> Focus</span><select value={effect.focus} onChange={(event) => updateEffect(index, { focus: event.target.value as EffectSegment['focus'] })} disabled={disabled}>{focusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+              <label className="effect-strength"><span><Gauge size={11} /> Strength <strong>{effect.motion === 'still' ? 'Off' : `${effect.strength}%`}</strong></span><input aria-label={`Effect ${index + 1} strength`} type="range" min={0} max={100} step={5} value={effect.strength} onChange={(event) => updateEffect(index, { strength: Number(event.target.value) })} disabled={disabled || effect.motion === 'still'} /></label>
               <div className="effect-time-fields">
                 <span><Clock3 size={11} /> Timing</span>
                 <label><input aria-label={`Effect ${index + 1} start`} type="number" min={previousEnd} max={effect.effectEnd - 0.05} step={0.05} value={effect.effectStart} onChange={(event) => updateEffect(index, { effectStart: Number(event.target.value) })} disabled={disabled} /><small>s</small></label>
