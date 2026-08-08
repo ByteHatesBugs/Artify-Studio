@@ -12,6 +12,7 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Exact effect start and end timing with motion held before and after the selected window
 - Up to eight ordered motion effects per video, each with independent focal placement and timing
 - Independent 0–100 strength control for every motion segment
+- Independent 0.25×–3× speed control for every effect, with smooth hold behavior after its timing window
 - Stabilized zoom and pan rendering with adaptive supersampling and Lanczos scaling
 - Eleven smooth motion choices, including vertical pans and four diagonal drifts
 - Five independent professional motion curves per effect: Cinematic, Smooth, Ease In, Ease Out, and Linear
@@ -29,7 +30,7 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Durable batch history with automatic recovery after server restarts
 - Safe cancellation, failed-job retries, individual downloads, and batch ZIP archives
 - Inline video players with seek controls for checking completed renders before download
-- Professional buffered transport controls with effect markers, timecode, speed, volume, and fullscreen
+- Professional buffered transport controls with effect markers, timecode, playback speed, and fullscreen
 - Rename-only updates and safe edit-and-rerender workflows for completed videos
 - Filterable render history with loading, empty, busy, confirmation, and notification states
 - Responsive, keyboard-accessible interface
