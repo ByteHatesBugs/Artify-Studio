@@ -9,7 +9,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { UploadZone } from './components/UploadZone';
 import type { Batch, EffectSegment, HealthStatus, RenderJob, RenderSettings, SelectedAudio, SelectedImage } from './types';
 
-const initialEffect: EffectSegment = { motion: 'zoom-in', focus: 'center', effectStart: 0, effectEnd: 5 };
+const initialEffect: EffectSegment = { motion: 'zoom-in', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 };
 
 const initialSettings: RenderSettings = {
   name: 'Campaign motion set',
@@ -37,7 +37,7 @@ const normalizeEffectStack = (effects: EffectSegment[] | undefined, duration: nu
     const effectStart = Math.max(previousEnd, Math.min(effect.effectStart, duration - 0.05));
     const effectEnd = Math.min(duration, Math.max(effect.effectEnd, effectStart + 0.05));
     if (effectStart >= duration || effectEnd <= effectStart) continue;
-    normalized.push({ ...effect, effectStart: Number(effectStart.toFixed(2)), effectEnd: Number(effectEnd.toFixed(2)) });
+    normalized.push({ ...effect, strength: effect.strength ?? 50, effectStart: Number(effectStart.toFixed(2)), effectEnd: Number(effectEnd.toFixed(2)) });
   }
   return normalized.length ? normalized : [{ ...fallback, effectStart: 0, effectEnd: duration }];
 };
@@ -49,6 +49,7 @@ const loadSettings = (): RenderSettings => {
     const effects = normalizeEffectStack(saved.effects, merged.duration, {
       motion: merged.motion,
       focus: merged.focus,
+      strength: saved.effects?.[0]?.strength ?? 50,
       effectStart: merged.effectStart,
       effectEnd: merged.effectEnd,
     });
