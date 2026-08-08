@@ -117,6 +117,15 @@ describe('media command construction', () => {
     expect(strong).toContain('1.12');
   });
 
+  it('changes effect velocity without introducing an end-of-window jump', () => {
+    const slow = buildVideoFilter({ ...settings, effects: [{ ...settings.effects[0]!, easing: 'linear', speed: 0.5 }] });
+    const fast = buildVideoFilter({ ...settings, effects: [{ ...settings.effects[0]!, easing: 'linear', speed: 2 }] });
+    expect(slow).toContain('clip((clip((on-30)/90,0,1))*0.5,0,1)');
+    expect(slow).toContain('if(gte(on,120),1.03');
+    expect(fast).toContain('clip((clip((on-30)/90,0,1))*2,0,1)');
+    expect(fast).toContain('if(gte(on,120),1.06');
+  });
+
   it('supports smooth vertical and diagonal motion paths', () => {
     const vertical = buildVideoFilter({ ...settings, effects: [{ ...settings.effects[0]!, motion: 'pan-up' }] });
     const diagonal = buildVideoFilter({ ...settings, effects: [{ ...settings.effects[0]!, motion: 'drift-down-right' }] });
