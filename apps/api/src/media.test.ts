@@ -117,4 +117,15 @@ describe('media command construction', () => {
     expect(diagonal).toContain("x='(iw-iw/zoom)*(if(between(on,30,120),0.25+");
     expect(diagonal).toContain("y='(ih-ih/zoom)*(if(between(on,30,120),0.25+");
   });
+
+  it('builds distinct professional motion curves per effect', () => {
+    const linear = buildVideoFilter({ ...settings, effects: [{ ...settings.effects[0]!, easing: 'linear' }] });
+    const smooth = buildVideoFilter({ ...settings, effects: [{ ...settings.effects[0]!, easing: 'ease-in-out' }] });
+    const easeOut = buildVideoFilter({ ...settings, effects: [{ ...settings.effects[0]!, easing: 'ease-out' }] });
+    const cinematic = buildVideoFilter({ ...settings, effects: [{ ...settings.effects[0]!, easing: 'cinematic' }] });
+    expect(linear).toContain('+(0.06)*(clip((on-30)/90,0,1))');
+    expect(smooth).toContain('3-2*(clip((on-30)/90,0,1))');
+    expect(easeOut).toContain('1-(1-(clip((on-30)/90,0,1)))');
+    expect(cinematic).toContain('*6-15)+10');
+  });
 });
