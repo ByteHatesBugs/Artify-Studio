@@ -16,6 +16,7 @@ export type JobStatus = 'queued' | 'processing' | 'completed' | 'failed' | 'canc
 export interface EffectSegment {
   motion: MotionEffect;
   focus: EffectFocus;
+  strength: number;
   effectStart: number;
   effectEnd: number;
 }
