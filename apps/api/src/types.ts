@@ -3,12 +3,14 @@ export const RESOLUTIONS = ['720p', '1080p', 'square', 'portrait'] as const;
 export const OUTPUT_FORMATS = ['mp4', 'webm'] as const;
 export const FIT_MODES = ['contain', 'cover'] as const;
 export const QUALITY_PROFILES = ['draft', 'balanced', 'high'] as const;
+export const EFFECT_FOCUSES = ['center', 'top', 'bottom', 'left', 'right'] as const;
 
 export type MotionEffect = (typeof MOTION_EFFECTS)[number];
 export type Resolution = (typeof RESOLUTIONS)[number];
 export type OutputFormat = (typeof OUTPUT_FORMATS)[number];
 export type FitMode = (typeof FIT_MODES)[number];
 export type QualityProfile = (typeof QUALITY_PROFILES)[number];
+export type EffectFocus = (typeof EFFECT_FOCUSES)[number];
 export type JobStatus = 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
 export interface RenderSettings {
@@ -18,6 +20,7 @@ export interface RenderSettings {
   fps: number;
   resolution: Resolution;
   motion: MotionEffect;
+  focus: EffectFocus;
   format: OutputFormat;
   fit: FitMode;
   quality: QualityProfile;
