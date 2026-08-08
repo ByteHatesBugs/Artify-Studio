@@ -27,6 +27,8 @@ export class BatchStore {
       batch.settings.quality ??= 'balanced';
       batch.settings.fade ??= true;
       batch.settings.audioVolume ??= 0.8;
+      batch.settings.audioSourceStart ??= 0;
+      batch.settings.audioVideoStart ??= 0;
       batch.settings.effectStart ??= 0;
       batch.settings.effectEnd ??= batch.settings.duration;
       batch.settings.effects ??= [{ motion: batch.settings.motion, focus: batch.settings.focus ?? 'center', strength: 50, effectStart: batch.settings.effectStart, effectEnd: batch.settings.effectEnd }];
@@ -37,6 +39,8 @@ export class BatchStore {
         job.settings.quality ??= batch.settings.quality;
         job.settings.fade ??= batch.settings.fade;
         job.settings.audioVolume ??= batch.settings.audioVolume;
+        job.settings.audioSourceStart ??= batch.settings.audioSourceStart;
+        job.settings.audioVideoStart ??= batch.settings.audioVideoStart;
         job.settings.effectStart ??= batch.settings.effectStart;
         job.settings.effectEnd ??= batch.settings.effectEnd;
         job.settings.effects ??= [{ motion: job.settings.motion, focus: job.settings.focus ?? 'center', strength: 50, effectStart: job.settings.effectStart, effectEnd: job.settings.effectEnd }];
