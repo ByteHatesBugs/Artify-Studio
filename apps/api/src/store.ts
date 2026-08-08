@@ -1,4 +1,4 @@
-import { access, readFile, rename, writeFile } from 'node:fs/promises';
+import { access, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { storagePaths } from './config.js';
 import type { Batch, JobStatus, RenderJob } from './types.js';
@@ -26,9 +26,9 @@ export class BatchStore {
       batch.settings.fit ??= 'contain';
       batch.settings.quality ??= 'balanced';
       batch.settings.fade ??= true;
-      batch.settings.audioVolume ??= 0.8;
-      batch.settings.audioSourceStart ??= 0;
-      batch.settings.audioVideoStart ??= 0;
+      delete (batch.settings as unknown as Record<string, unknown>).audioVolume;
+      delete (batch.settings as unknown as Record<string, unknown>).audioSourceStart;
+      delete (batch.settings as unknown as Record<string, unknown>).audioVideoStart;
       batch.settings.effectStart ??= 0;
       batch.settings.effectEnd ??= batch.settings.duration;
       batch.settings.effects ??= [{ motion: batch.settings.motion, focus: batch.settings.focus ?? 'center', strength: 50, effectStart: batch.settings.effectStart, effectEnd: batch.settings.effectEnd }];
@@ -41,9 +41,9 @@ export class BatchStore {
         job.settings.fit ??= batch.settings.fit;
         job.settings.quality ??= batch.settings.quality;
         job.settings.fade ??= batch.settings.fade;
-        job.settings.audioVolume ??= batch.settings.audioVolume;
-        job.settings.audioSourceStart ??= batch.settings.audioSourceStart;
-        job.settings.audioVideoStart ??= batch.settings.audioVideoStart;
+        delete (job.settings as unknown as Record<string, unknown>).audioVolume;
+        delete (job.settings as unknown as Record<string, unknown>).audioSourceStart;
+        delete (job.settings as unknown as Record<string, unknown>).audioVideoStart;
         job.settings.effectStart ??= batch.settings.effectStart;
         job.settings.effectEnd ??= batch.settings.effectEnd;
         job.settings.effects ??= [{ motion: job.settings.motion, focus: job.settings.focus ?? 'center', strength: 50, effectStart: job.settings.effectStart, effectEnd: job.settings.effectEnd }];
@@ -52,13 +52,9 @@ export class BatchStore {
           effect.easing ??= 'cinematic';
         }
         job.attempts ??= job.startedAt ? 1 : 0;
-        if (job.audioPath) {
-          const audioExists = await access(job.audioPath).then(() => true).catch(() => false);
-          if (!audioExists) {
-            job.audioPath = undefined;
-            job.audioName = undefined;
-          }
-        }
+        if (job.audioPath) await rm(job.audioPath, { force: true }).catch(() => undefined);
+        job.audioPath = undefined;
+        job.audioName = undefined;
         if (job.status === 'completed') {
           const outputExists = await access(job.outputPath).then(() => true).catch(() => false);
           if (!outputExists) Object.assign(job, { status: 'failed', progress: 0, error: 'The rendered file is missing. Retry this batch.' });
