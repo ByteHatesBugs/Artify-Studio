@@ -26,6 +26,8 @@ const initialSettings: RenderSettings = {
   fade: true,
   background: '#09090b',
   audioVolume: 0.8,
+  audioSourceStart: 0,
+  audioVideoStart: 0,
   effects: [initialEffect],
 };
 
@@ -210,6 +212,7 @@ export default function App() {
     }
     if (audio) URL.revokeObjectURL(audio.previewUrl);
     setAudio({ file, previewUrl: URL.createObjectURL(file) });
+    changeSettings({ ...settings, audioSourceStart: 0, audioVideoStart: 0 });
   };
 
   const clearAudio = () => {
@@ -367,7 +370,7 @@ export default function App() {
         <section className="studio-layout" id="workspace">
           <div className="source-column">
             <UploadZone images={images} settings={settings} disabled={isSubmitting} onAdd={addImages} onRemove={removeImage} onMove={moveImage} onOverride={changeImageOverride} onClear={clearImages} />
-            <AudioTrackPicker audio={audio} volume={settings.audioVolume} disabled={isSubmitting} onSelect={selectAudio} onRemove={clearAudio} onVolumeChange={(audioVolume) => changeSettings({ ...settings, audioVolume })} />
+            <AudioTrackPicker audio={audio} volume={settings.audioVolume} videoDuration={settings.duration} sourceStart={settings.audioSourceStart} videoStart={settings.audioVideoStart} disabled={isSubmitting} onSelect={selectAudio} onRemove={clearAudio} onVolumeChange={(audioVolume) => changeSettings({ ...settings, audioVolume })} onSourceStartChange={(audioSourceStart) => changeSettings({ ...settings, audioSourceStart })} onVideoStartChange={(audioVideoStart) => changeSettings({ ...settings, audioVideoStart })} />
           </div>
           <SettingsPanel settings={settings} previewImage={images[0]?.previewUrl} imageCount={images.length} isSubmitting={isSubmitting} engineReady={health?.engine.ready === true} onChange={changeSettings} onReset={() => changeSettings({ ...initialSettings, name: settings.name })} onSubmit={submit} />
         </section>
