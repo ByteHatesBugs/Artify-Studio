@@ -88,11 +88,9 @@ export const buildVideoFilter = (settings: RenderSettings) => {
 
   if (effects.every((effect) => effect.motion === 'still')) return `${base}${fades},format=yuv420p`;
 
-  let state = initialMotionState(effects[0]!);
   const transitions = effects.map((effect) => {
-    const from = state;
+    const from = initialMotionState(effect);
     const to = targetMotionState(effect, from);
-    state = to;
     const start = Math.round(effect.effectStart * settings.fps);
     const duration = Math.max(1, Math.round((effect.effectEnd - effect.effectStart) * settings.fps));
     const linear = `clip((on-${start})/${duration},0,1)`;
@@ -101,13 +99,17 @@ export const buildVideoFilter = (settings: RenderSettings) => {
   });
 
   const propertyExpression = (property: keyof MotionState) => {
-    let expression = numberExpression(transitions.at(-1)!.to[property]);
+    const neutral: MotionState = { zoom: 1, ...focusPosition(effects[0]!.focus) };
+    let expression = numberExpression(neutral[property]);
+    for (const transition of [...transitions].sort((left, right) => left.end - right.end)) {
+      expression = `if(gte(on,${transition.end}),${numberExpression(transition.to[property])},${expression})`;
+    }
     for (let index = transitions.length - 1; index >= 0; index -= 1) {
       const transition = transitions[index]!;
       const from = numberExpression(transition.from[property]);
       const delta = numberExpression(transition.to[property] - transition.from[property]);
       const during = delta === '0' ? from : `${from}+(${delta})*(${transition.progress})`;
-      expression = `if(lt(on,${transition.start}),${from},if(lte(on,${transition.end}),${during},${expression}))`;
+      expression = `if(between(on,${transition.start},${transition.end}),${during},${expression})`;
     }
     return expression;
   };
