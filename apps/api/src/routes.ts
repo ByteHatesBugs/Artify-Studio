@@ -13,17 +13,15 @@ import { batchStore } from './store.js';
 import type { Batch, RenderJob } from './types.js';
 
 const imageMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const audioMimeTypes = new Set(['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/aac', 'audio/ogg']);
 const upload = multer({
   storage: multer.diskStorage({
     destination: storagePaths.uploads,
     filename: (_request, file, callback) => callback(null, `${randomUUID()}${path.extname(file.originalname).toLowerCase()}`),
   }),
-  limits: { fileSize: config.maxFileSizeBytes, files: config.maxBatchSize + 1 },
+  limits: { fileSize: config.maxFileSizeBytes, files: config.maxBatchSize },
   fileFilter: (_request, file, callback) => {
     if (file.fieldname === 'images' && imageMimeTypes.has(file.mimetype)) callback(null, true);
-    else if (file.fieldname === 'audio' && audioMimeTypes.has(file.mimetype)) callback(null, true);
-    else callback(Object.assign(new Error('Use JPG, PNG, or WebP images and MP3, WAV, M4A, AAC, or OGG audio.'), { status: 400 }));
+    else callback(Object.assign(new Error('Use JPG, PNG, or WebP images.'), { status: 400 }));
   },
 });
 
@@ -44,11 +42,10 @@ apiRouter.get('/batches/:batchId', (request, response) => {
   return response.json({ batch: presentBatch(batch) });
 });
 
-apiRouter.post('/batches', upload.fields([{ name: 'images', maxCount: config.maxBatchSize }, { name: 'audio', maxCount: 1 }]), (request, response, next) => {
+apiRouter.post('/batches', upload.fields([{ name: 'images', maxCount: config.maxBatchSize }]), (request, response, next) => {
   const uploaded = request.files as Record<string, Express.Multer.File[]> | undefined;
   const files = uploaded?.images;
-  const audioFile = uploaded?.audio?.[0];
-  const allFiles = [...(files ?? []), ...(audioFile ? [audioFile] : [])];
+  const allFiles = files ?? [];
   const parsed = createBatchSchema.safeParse(request.body);
 
   if (!parsed.success || !files?.length) {
@@ -101,8 +98,6 @@ apiRouter.post('/batches', upload.fields([{ name: 'images', maxCount: config.max
         id,
         originalName: file.originalname,
         inputPath: file.path,
-        audioPath: audioFile?.path,
-        audioName: audioFile?.originalname,
         outputPath: path.join(storagePaths.outputs, `${id}.${jobSettings.format}`),
         outputName,
         status: 'queued',
@@ -232,15 +227,6 @@ apiRouter.get('/batches/:batchId/jobs/:jobId/preview', (request, response) => {
   response.setHeader('Content-Disposition', `inline; filename="${job.outputName}"`);
   response.setHeader('Cache-Control', 'private, max-age=3600');
   return response.sendFile(job.outputPath);
-});
-
-apiRouter.get('/batches/:batchId/jobs/:jobId/audio', (request, response) => {
-  const batch = batchStore.get(request.params.batchId);
-  const job = batch?.jobs.find((candidate) => candidate.id === request.params.jobId);
-  if (!batch || !job?.audioPath || !job.audioName) return response.status(404).json({ error: 'Soundtrack not found.' });
-  response.setHeader('Content-Disposition', `inline; filename="${job.audioName.replace(/["\r\n]/g, '')}"`);
-  response.setHeader('Cache-Control', 'private, max-age=3600');
-  return response.sendFile(job.audioPath);
 });
 
 apiRouter.get('/batches/:batchId/download', async (request, response, next) => {
