@@ -19,6 +19,8 @@ describe('RenderFlow', () => {
   it('renders the upload workspace and disabled empty render action', async () => {
     render(<App />);
     expect(screen.getByRole('heading', { name: /still images/i })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /source to verified export/i })).toBeTruthy();
+    expect(screen.getByText(/11 effects · 5 curves/i)).toBeTruthy();
     expect(screen.getByRole('button', { name: /upload images/i })).toBeTruthy();
     expect(screen.queryByText(/soundtrack/i)).toBeNull();
     expect(screen.getByRole('combobox', { name: /search render history/i })).toBeTruthy();
