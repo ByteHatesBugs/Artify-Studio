@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Blend, Clapperboard, Clock3, Crop, Eye, Gauge, MonitorUp, Play, RotateCcw, Sparkles } from 'lucide-react';
 import type { RenderSettings } from '../types';
+import { resolutionAspect, resolutionOptions } from '../resolutionOptions';
 import { EffectStackEditor } from './EffectStackEditor';
 
 interface SettingsPanelProps {
@@ -13,13 +14,6 @@ interface SettingsPanelProps {
   onReset: () => void;
   onSubmit: () => void;
 }
-
-const resolutions = [
-  { value: '720p', label: 'HD', detail: '1280 × 720' },
-  { value: '1080p', label: 'Full HD', detail: '1920 × 1080' },
-  { value: 'square', label: 'Square', detail: '1080 × 1080' },
-  { value: 'portrait', label: 'Portrait', detail: '1080 × 1920' },
-] as const;
 
 const profiles: Array<{ label: string; detail: string; settings: Partial<RenderSettings> }> = [
   { label: 'Campaign', detail: 'Full HD · MP4', settings: { resolution: '1080p', format: 'mp4', motion: 'zoom-in', focus: 'center', duration: 5, effectStart: 0, effectEnd: 5, effects: [{ motion: 'zoom-in', focus: 'center', effectStart: 0, effectEnd: 5 }], fps: 30, fit: 'cover', quality: 'high', fade: true } },
@@ -116,7 +110,7 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
       </div>
 
       <div className="preview-heading"><span><Eye size={14} /> Live preview</span><small>First frame</small></div>
-      <div className={`motion-preview preview-${settings.resolution}`} style={{ backgroundColor: settings.background }}>
+      <div className={`motion-preview preview-${resolutionAspect(settings.resolution)}`} style={{ backgroundColor: settings.background }}>
         {previewImage ? (
           <img
             ref={previewRef}
@@ -149,7 +143,7 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
 
       <span className="field-label"><MonitorUp size={15} /> Canvas</span>
       <div className="segmented-grid">
-        {resolutions.map((resolution) => (
+        {resolutionOptions.map((resolution) => (
           <button
             type="button"
             key={resolution.value}
@@ -162,13 +156,10 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
       </div>
 
       <div className="field-grid">
-        <label className="field-control">
+        <div className="field-control full-frame-control">
           <span><Crop size={15} /> Framing</span>
-          <select value={settings.fit} onChange={(event) => update('fit', event.target.value as RenderSettings['fit'])}>
-            <option value="contain">Fit entire image</option>
-            <option value="cover">Fill and crop</option>
-          </select>
-        </label>
+          <div><strong>Full frame</strong><small>Edge-to-edge output</small></div>
+        </div>
         <label className="field-control">
           <span><Gauge size={15} /> Quality</span>
           <select value={settings.quality} onChange={(event) => update('quality', event.target.value as RenderSettings['quality'])}>
