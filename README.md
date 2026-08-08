@@ -13,12 +13,12 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Up to eight ordered motion effects per video, each with independent focal placement and timing
 - Video durations from 1 to 60 seconds
 - Per-image effect-stack overrides on top of reusable batch defaults
-- Contain and cover framing modes with configurable canvas background color
-- Full-canvas cover framing by default for screen-filling output
+- Enforced edge-to-edge cover framing for screen-filling final output
+- Optional batch soundtrack upload with looping, preview, and adjustable mix volume
 - Draft, balanced, and high encoding profiles that change FFmpeg speed and output quality
 - Optional fade-in and fade-out transitions for polished clips
 - Persistent preferences and quick profiles for common campaign, social, and lightweight outputs
-- Landscape, square, and portrait canvases up to Full HD
+- Ten standard landscape, square, story, vertical, and 4:5 feed canvases from SD through 4K
 - MP4/H.264 and WebM/VP9 output
 - Queue concurrency controls to protect the processing server under load
 - Live batch and per-video render progress
@@ -30,6 +30,7 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Filterable render history with loading, empty, busy, confirmation, and notification states
 - Responsive, keyboard-accessible interface
 - Lazy preview decoding and viewport-aware rendering for smooth large-batch editing
+- Reduced render working-canvas overhead, non-overlapping polling, and throttled preview updates
 - Automatic input cleanup and configurable output retention
 
 ## Architecture
@@ -150,9 +151,9 @@ Then open `http://localhost:8787`.
 | `CLIENT_ORIGIN` | `http://localhost:5173` | Allowed development web origin |
 | `FFMPEG_PATH` | `ffmpeg` | FFmpeg executable path |
 | `STORAGE_DIR` | `./storage` | Runtime media directory |
-| `MAX_FILE_SIZE_MB` | `25` | Maximum size of one source image |
+| `MAX_FILE_SIZE_MB` | `25` | Maximum size of one source image or soundtrack |
 | `MAX_BATCH_SIZE` | `50` | Maximum images accepted in one request |
-| `QUEUE_CONCURRENCY` | `2` | Simultaneous FFmpeg processes |
+| `QUEUE_CONCURRENCY` | `1` | Simultaneous FFmpeg processes; conservative by default to keep the UI responsive |
 | `JOB_TTL_HOURS` | `24` | Retention window for render results |
 
 Keep `QUEUE_CONCURRENCY` conservative. Full HD video encoding is CPU- and memory-intensive; increase it only after measuring the target server.
@@ -161,7 +162,7 @@ Keep `QUEUE_CONCURRENCY` conservative. Full HD video encoding is CPU- and memory
 
 - `GET /api/health` — service health
 - `GET /api/batches` — current server-local batch history
-- `POST /api/batches` — create a multipart render batch
+- `POST /api/batches` — create a multipart render batch with images and an optional audio track
 - `POST /api/batches/:batchId/cancel` — cancel queued and active work
 - `POST /api/batches/:batchId/retry` — retry failed or cancelled jobs with retained sources
 - `GET /api/batches/:batchId/download` — download completed videos as a ZIP
