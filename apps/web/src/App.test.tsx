@@ -26,7 +26,9 @@ describe('RenderFlow', () => {
     expect(campaignProfile.getAttribute('aria-pressed')).toBe('false');
     fireEvent.click(campaignProfile);
     expect(campaignProfile.getAttribute('aria-pressed')).toBe('true');
-    expect(await screen.findByRole('button', { name: /render 0 videos/i })).toHaveProperty('disabled', true);
+    expect(await screen.findByRole('button', { name: /add images to continue/i })).toHaveProperty('disabled', true);
+    expect(screen.getByText(/add at least one image to continue/i)).toBeTruthy();
+    expect(screen.getByLabelText(/video output requirements/i).textContent).toMatch(/silent output/i);
     fireEvent.keyDown(window, { key: 'Enter', ctrlKey: true });
     expect(vi.mocked(fetch).mock.calls.some(([, options]) => options?.method === 'POST')).toBe(false);
     expect(screen.getByRole('heading', { name: /your render queue is ready/i })).toBeTruthy();
