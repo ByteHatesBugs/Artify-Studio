@@ -16,7 +16,7 @@ const createCancelledBatch = (): Batch => ({
   name: 'Persistence test',
   status: 'cancelled',
   progress: 0,
-  settings: { duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'still', focus: 'center', format: 'mp4', fit: 'contain', quality: 'balanced', fade: true, background: '#09090b', audioVolume: 0.8, effects: [{ motion: 'still', focus: 'center', effectStart: 0, effectEnd: 5 }] },
+  settings: { duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'still', focus: 'center', format: 'mp4', fit: 'contain', quality: 'balanced', fade: true, background: '#09090b', audioVolume: 0.8, effects: [{ motion: 'still', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 }] },
   createdAt: new Date().toISOString(),
   completedAt: new Date().toISOString(),
   jobs: [{
@@ -28,7 +28,7 @@ const createCancelledBatch = (): Batch => ({
     status: 'cancelled',
     progress: 0,
     attempts: 1,
-    settings: { duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'still', focus: 'center', format: 'mp4', fit: 'contain', quality: 'balanced', fade: true, background: '#09090b', audioVolume: 0.8, effects: [{ motion: 'still', focus: 'center', effectStart: 0, effectEnd: 5 }] },
+    settings: { duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'still', focus: 'center', format: 'mp4', fit: 'contain', quality: 'balanced', fade: true, background: '#09090b', audioVolume: 0.8, effects: [{ motion: 'still', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 }] },
     createdAt: new Date().toISOString(),
   }],
 });
@@ -39,13 +39,17 @@ describe('BatchStore', () => {
     temporaryDirectories.push(directory);
     const statePath = path.join(directory, 'batches.json');
     const first = new BatchStore(statePath);
-    first.create(createCancelledBatch());
+    const legacyBatch = createCancelledBatch();
+    delete (legacyBatch.settings.effects[0] as Partial<(typeof legacyBatch.settings.effects)[number]>).strength;
+    delete (legacyBatch.jobs[0]!.settings.effects[0] as Partial<(typeof legacyBatch.settings.effects)[number]>).strength;
+    first.create(legacyBatch);
     await first.flush();
 
     const restored = new BatchStore(statePath);
     await restored.initialize();
     expect(restored.get('batch-1')?.name).toBe('Persistence test');
     expect(restored.get('batch-1')?.jobs[0]?.attempts).toBe(1);
+    expect(restored.get('batch-1')?.jobs[0]?.settings.effects[0]?.strength).toBe(50);
   });
 
   it('prepares cancelled jobs for a clean retry', async () => {
