@@ -70,15 +70,17 @@ describe('render settings validation', () => {
     expect(excessive.success).toBe(false);
   });
 
-  it('rejects overlapping effect segments', () => {
-    const parsed = createBatchSchema.safeParse({
+  it('accepts overlapping effect segments in stack-priority order', () => {
+    const parsed = createBatchSchema.parse({
       ...validSettings,
       effects: JSON.stringify([
         { motion: 'zoom-in', focus: 'center', effectStart: 0, effectEnd: 3 },
         { motion: 'pan-left', focus: 'top', effectStart: 2, effectEnd: 5 },
       ]),
     });
-    expect(parsed.success).toBe(false);
+    expect(parsed.effects).toHaveLength(2);
+    expect(parsed.effects[0]?.effectEnd).toBe(3);
+    expect(parsed.effects[1]?.effectStart).toBe(2);
   });
 
   it('accepts videos up to one minute and rejects longer durations', () => {
