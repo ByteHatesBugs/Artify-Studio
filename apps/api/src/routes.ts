@@ -8,7 +8,7 @@ import { mediaEngine } from './engine.js';
 import { createBatchArchive, removeBatchArchive, removeBatchFiles, safeStem } from './files.js';
 import { renderQueue } from './queue.js';
 import { presentBatch } from './presenter.js';
-import { createBatchSchema } from './schema.js';
+import { createBatchSchema, renameRenderSchema, rerenderJobSchema } from './schema.js';
 import { batchStore } from './store.js';
 import type { Batch, RenderJob } from './types.js';
 
@@ -145,6 +145,62 @@ apiRouter.post('/batches/:batchId/retry', async (request, response, next) => {
     renderQueue.enqueue(batch.id, jobs);
     return response.status(202).json({ batch: presentBatch(batch), retried: jobs.length });
   } catch (error) {
+    return next(error);
+  }
+});
+
+apiRouter.patch('/batches/:batchId/jobs/:jobId', async (request, response) => {
+  const batch = batchStore.get(request.params.batchId);
+  const job = batch?.jobs.find((candidate) => candidate.id === request.params.jobId);
+  if (!batch || !job) return response.status(404).json({ error: 'Render not found.' });
+  const parsed = renameRenderSchema.safeParse(request.body);
+  if (!parsed.success) return response.status(400).json({ error: 'Enter a valid video name.' });
+  if (job.status === 'queued' || job.status === 'processing') return response.status(409).json({ error: 'Wait for this render to finish before renaming it.' });
+
+  const outputName = `${safeStem(parsed.data.outputName)}.${job.settings.format}`;
+  const duplicate = batch.jobs.some((candidate) => candidate.id !== job.id && candidate.outputName.toLowerCase() === outputName.toLowerCase());
+  if (duplicate) return response.status(409).json({ error: 'Another video in this batch already uses that name.' });
+  await removeBatchArchive(batch.id);
+  batchStore.updateJob(batch.id, job.id, { outputName });
+  return response.json({ batch: presentBatch(batchStore.get(batch.id)!) });
+});
+
+apiRouter.post('/batches/:batchId/jobs/:jobId/rerender', async (request, response, next) => {
+  const batch = batchStore.get(request.params.batchId);
+  const job = batch?.jobs.find((candidate) => candidate.id === request.params.jobId);
+  if (!batch || !job) return response.status(404).json({ error: 'Render not found.' });
+  if (job.status !== 'completed') return response.status(409).json({ error: 'Only completed videos can be edited and rendered again.' });
+  if (!mediaEngine.get().ready) return response.status(503).json({ error: 'FFmpeg is unavailable.' });
+
+  const parsed = rerenderJobSchema.safeParse(request.body);
+  if (!parsed.success) return response.status(400).json({ error: 'Some updated video settings are invalid.', details: parsed.error.flatten() });
+  if (parsed.data.settings.format !== job.settings.format) return response.status(400).json({ error: 'Output format cannot be changed during an edit. Create a new render for another format.' });
+
+  const outputName = `${safeStem(parsed.data.outputName)}.${job.settings.format}`;
+  const duplicate = batch.jobs.some((candidate) => candidate.id !== job.id && candidate.outputName.toLowerCase() === outputName.toLowerCase());
+  if (duplicate) return response.status(409).json({ error: 'Another video in this batch already uses that name.' });
+
+  try {
+    await access(job.inputPath);
+    await removeBatchArchive(batch.id);
+    const outputPath = path.join(storagePaths.outputs, `${job.id}-${randomUUID()}.${job.settings.format}`);
+    batchStore.updateJob(batch.id, job.id, {
+      outputName,
+      outputPath,
+      supersededOutputName: job.outputName,
+      supersededOutputPath: job.outputPath,
+      settings: parsed.data.settings,
+      status: 'queued',
+      progress: 0,
+      error: undefined,
+      startedAt: undefined,
+      completedAt: undefined,
+    });
+    const updatedJob = batchStore.get(batch.id)!.jobs.find((candidate) => candidate.id === job.id)!;
+    renderQueue.enqueue(batch.id, [updatedJob]);
+    return response.status(202).json({ batch: presentBatch(batchStore.get(batch.id)!) });
+  } catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return response.status(409).json({ error: 'The retained source image is no longer available for editing.' });
     return next(error);
   }
 });
