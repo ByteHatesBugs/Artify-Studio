@@ -78,7 +78,7 @@ export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onDel
               <div className="batch-topline">
                 <div className="batch-title">
                   <span className="batch-icon"><Film size={19} /></span>
-                  <div><h3>{batch.name}</h3><p>{batch.jobs.length} outputs · {batch.settings.resolution} · effect {batch.settings.effectStart ?? 0}–{batch.settings.effectEnd ?? batch.settings.duration}s · {batch.settings.quality || 'balanced'} · {batch.settings.format.toUpperCase()}</p></div>
+                  <div><h3>{batch.name}</h3><p>{batch.jobs.length} outputs · {batch.settings.resolution} · {batch.settings.effects?.length ?? 1} effect{(batch.settings.effects?.length ?? 1) === 1 ? '' : 's'} · {batch.settings.quality || 'balanced'} · {batch.settings.format.toUpperCase()}</p></div>
                 </div>
                 <div className="batch-actions">
                   {!active && completedCount > 0 && <a className="icon-action download-action" href={batchDownloadUrl(batch.id)} aria-label={`Download ${batch.name}`}><Download size={16} /><span>Download all</span></a>}
@@ -99,7 +99,7 @@ export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onDel
                   const key = `${batch.id}:${job.id}`;
                   const previewOpen = previewKey === key;
                   const effectSummary = job.settings
-                    ? `${job.settings.motion.replace('-', ' ')} · ${job.settings.focus ?? 'center'} · ${job.settings.effectStart}–${job.settings.effectEnd}s`
+                    ? `${job.settings.effects?.length ?? 1} effect${(job.settings.effects?.length ?? 1) === 1 ? '' : 's'} · full canvas`
                     : statusLabel[job.status];
                   return (
                     <div className="job-item" key={job.id}>
