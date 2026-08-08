@@ -24,6 +24,7 @@ export interface EffectSegment {
   focus: EffectFocus;
   strength: number;
   easing?: EffectEasing;
+  speed?: number;
   effectStart: number;
   effectEnd: number;
 }
