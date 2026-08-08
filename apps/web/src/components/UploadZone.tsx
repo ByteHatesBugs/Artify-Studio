@@ -1,6 +1,7 @@
 import { useRef, useState, type ChangeEvent, type DragEvent, type KeyboardEvent } from 'react';
-import { ArrowLeft, ArrowRight, Clock3, Focus, GripVertical, ImagePlus, Plus, SlidersHorizontal, Trash2, UploadCloud } from 'lucide-react';
+import { ArrowLeft, ArrowRight, GripVertical, ImagePlus, Plus, SlidersHorizontal, Trash2, UploadCloud } from 'lucide-react';
 import type { ImageEffectOverride, RenderSettings, SelectedImage } from '../types';
+import { EffectStackEditor } from './EffectStackEditor';
 
 interface UploadZoneProps {
   images: SelectedImage[];
@@ -21,14 +22,7 @@ export function UploadZone({ images, settings, disabled, onAdd, onRemove, onMove
   const editingImage = images.find((image) => image.id === editingId);
 
   const effectiveOverride = (image: SelectedImage): ImageEffectOverride => image.effectOverride ?? {
-    motion: settings.motion,
-    focus: settings.focus,
-    effectStart: settings.effectStart,
-    effectEnd: settings.effectEnd,
-  };
-
-  const updateOverride = (image: SelectedImage, patch: Partial<ImageEffectOverride>) => {
-    onOverride(image.id, { ...effectiveOverride(image), ...patch });
+    effects: settings.effects,
   };
 
   const choose = () => !disabled && inputRef.current?.click();
@@ -127,36 +121,14 @@ export function UploadZone({ images, settings, disabled, onAdd, onRemove, onMove
             <Plus size={22} /><span>Add more</span>
           </button>
           {editingImage && (() => {
-            const effect = effectiveOverride(editingImage);
-            const changeStart = (value: number) => updateOverride(editingImage, { effectStart: Number(Math.max(0, Math.min(value, effect.effectEnd - 0.05)).toFixed(2)) });
-            const changeEnd = (value: number) => updateOverride(editingImage, { effectEnd: Number(Math.min(settings.duration, Math.max(value, 0.1, effect.effectStart + 0.05)).toFixed(2)) });
-            const effectLeft = (effect.effectStart / settings.duration) * 100;
-            const effectWidth = ((effect.effectEnd - effect.effectStart) / settings.duration) * 100;
+            const override = effectiveOverride(editingImage);
             return (
               <div className="asset-effect-editor">
                 <div className="asset-effect-heading">
-                  <div><SlidersHorizontal size={15} /><span><strong>Selective effect</strong><small title={editingImage.file.name}>{editingImage.file.name}</small></span></div>
+                  <div><SlidersHorizontal size={15} /><span><strong>Selective effects</strong><small title={editingImage.file.name}>{editingImage.file.name}</small></span></div>
                   <button type="button" onClick={() => onOverride(editingImage.id, undefined)} disabled={!editingImage.effectOverride || disabled}>Use batch defaults</button>
                 </div>
-                <div className="asset-effect-fields">
-                  <label><span>Motion</span><select value={effect.motion} onChange={(event) => updateOverride(editingImage, { motion: event.target.value as ImageEffectOverride['motion'] })} disabled={disabled}>
-                    <option value="zoom-in">Slow zoom in</option><option value="zoom-out">Slow zoom out</option><option value="pan-left">Pan left</option><option value="pan-right">Pan right</option><option value="still">Still frame</option>
-                  </select></label>
-                  <label><span><Focus size={12} /> Effect focus</span><select value={effect.focus} onChange={(event) => updateOverride(editingImage, { focus: event.target.value as ImageEffectOverride['focus'] })} disabled={disabled}>
-                    <option value="center">Center</option><option value="top">Top</option><option value="bottom">Bottom</option><option value="left">Left</option><option value="right">Right</option>
-                  </select></label>
-                </div>
-                <div className="asset-effect-timing">
-                  <span><Clock3 size={13} /> Apply between</span>
-                  <label><input type="number" min={0} max={effect.effectEnd - 0.05} step={0.05} value={effect.effectStart} onChange={(event) => changeStart(Number(event.target.value))} disabled={disabled} /><small>sec</small></label>
-                  <span>to</span>
-                  <label><input type="number" min={Math.max(0.1, effect.effectStart + 0.05)} max={settings.duration} step={0.05} value={effect.effectEnd} onChange={(event) => changeEnd(Number(event.target.value))} disabled={disabled} /><small>sec</small></label>
-                </div>
-                <div className="asset-effect-range">
-                  <div className="timing-track" aria-hidden="true"><span style={{ left: `${effectLeft}%`, width: `${effectWidth}%` }} /></div>
-                  <input className="timeline-range" aria-label={`Effect start time for ${editingImage.file.name}`} type="range" min={0} max={settings.duration} step={0.05} value={effect.effectStart} onChange={(event) => changeStart(Number(event.target.value))} disabled={disabled} />
-                  <input className="timeline-range" aria-label={`Effect end time for ${editingImage.file.name}`} type="range" min={0.1} max={settings.duration} step={0.05} value={effect.effectEnd} onChange={(event) => changeEnd(Number(event.target.value))} disabled={disabled} />
-                </div>
+                <EffectStackEditor compact effects={override.effects} duration={settings.duration} disabled={disabled} onChange={(effects) => onOverride(editingImage.id, { effects })} />
               </div>
             );
           })()}
