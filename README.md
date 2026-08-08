@@ -14,6 +14,7 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Independent 0–100 strength control for every motion segment
 - Stabilized zoom and pan rendering with adaptive supersampling and Lanczos scaling
 - Eleven smooth motion choices, including vertical pans and four diagonal drifts
+- Five independent professional motion curves per effect: Cinematic, Smooth, Ease In, Ease Out, and Linear
 - Independent effect timing with visible overlapping lanes; earlier effects take priority wherever time ranges overlap
 - Video durations from 1 to 60 seconds
 - Per-image effect-stack overrides on top of reusable batch defaults
