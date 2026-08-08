@@ -61,12 +61,20 @@ describe('render settings validation', () => {
     expect(parsed.effects[1]?.motion).toBe('pan-left');
     expect(parsed.effects[0]?.strength).toBe(50);
     expect(parsed.effects[0]?.easing).toBe('cinematic');
+    expect(parsed.effects[0]?.speed).toBe(1);
   });
 
   it('validates independent effect strength', () => {
     const strong = createBatchSchema.safeParse({ ...validSettings, effects: JSON.stringify([{ motion: 'zoom-in', focus: 'center', strength: 85, effectStart: 0, effectEnd: 5 }]) });
     const excessive = createBatchSchema.safeParse({ ...validSettings, effects: JSON.stringify([{ motion: 'zoom-in', focus: 'center', strength: 101, effectStart: 0, effectEnd: 5 }]) });
     expect(strong.success && strong.data.effects[0]?.strength).toBe(85);
+    expect(excessive.success).toBe(false);
+  });
+
+  it('validates independent effect speed', () => {
+    const fast = createBatchSchema.safeParse({ ...validSettings, effects: JSON.stringify([{ motion: 'zoom-in', focus: 'center', speed: 2.5, effectStart: 0, effectEnd: 5 }]) });
+    const excessive = createBatchSchema.safeParse({ ...validSettings, effects: JSON.stringify([{ motion: 'zoom-in', focus: 'center', speed: 3.25, effectStart: 0, effectEnd: 5 }]) });
+    expect(fast.success && fast.data.effects[0]?.speed).toBe(2.5);
     expect(excessive.success).toBe(false);
   });
 
