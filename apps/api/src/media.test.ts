@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildFfmpegArgs, buildVideoFilter } from './media.js';
+import { buildFfmpegArgs, buildVideoFilter, validateRenderProbe } from './media.js';
 import type { RenderJob, RenderSettings } from './types.js';
 
 const settings: RenderSettings = {
@@ -64,7 +64,18 @@ describe('media command construction', () => {
     const filter = buildVideoFilter({ ...settings, fit: 'cover', fade: false, motion: 'still', effects: [{ motion: 'still', focus: 'center', strength: 0, effectStart: 0, effectEnd: 5 }] });
     expect(filter).toContain('force_original_aspect_ratio=increase');
     expect(filter).toContain('crop=1920:1080:(iw-ow)/2:(ih-oh)/2');
+    expect(filter).toContain('setsar=1');
     expect(filter).not.toContain('fade=');
+  });
+
+  it('accepts only output that matches every requested video requirement', () => {
+    const validProbe = {
+      streams: [{ codec_type: 'video', width: 1920, height: 1080, avg_frame_rate: '30/1', sample_aspect_ratio: '1:1', nb_read_frames: '150' }],
+      format: { duration: '5.000000' },
+    };
+    expect(() => validateRenderProbe(validProbe, settings)).not.toThrow();
+    expect(() => validateRenderProbe({ ...validProbe, streams: [{ ...validProbe.streams[0], width: 1280 }] }, settings)).toThrow(/canvas is 1280x1080/i);
+    expect(() => validateRenderProbe({ ...validProbe, streams: [...validProbe.streams, { codec_type: 'audio' }] }, settings)).toThrow(/audio stream/i);
   });
 
   it('anchors zoom motion at the selected focal placement', () => {
