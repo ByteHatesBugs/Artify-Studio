@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { AlertCircle, Check, Download, Film, Inbox, LoaderCircle, RotateCcw, Square, Trash2, X } from 'lucide-react';
-import { batchDownloadUrl, jobDownloadUrl } from '../api';
+import { AlertCircle, Check, ChevronUp, CirclePlay, Download, Film, Inbox, LoaderCircle, RotateCcw, Square, Trash2, X } from 'lucide-react';
+import { batchDownloadUrl, jobDownloadUrl, jobPreviewUrl } from '../api';
 import type { Batch, JobStatus } from '../types';
 
 interface BatchQueueProps {
@@ -31,6 +31,7 @@ type QueueFilter = 'all' | 'active' | 'ready' | 'attention';
 
 export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onDelete }: BatchQueueProps) {
   const [filter, setFilter] = useState<QueueFilter>('all');
+  const [previewKey, setPreviewKey] = useState<string | null>(null);
   const visibleBatches = useMemo(() => batches.filter((batch) => {
     if (filter === 'active') return batch.status === 'queued' || batch.status === 'processing';
     if (filter === 'ready') return batch.status === 'completed';
@@ -93,16 +94,34 @@ export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onDel
                 <strong>{batch.progress}%</strong>
               </div>
               <div className="job-list">
-                {batch.jobs.map((job) => (
-                  <div className="job-row" key={job.id}>
-                    <div className={`job-status ${job.status}`}><StatusIcon status={job.status} /></div>
-                    <div className="job-name"><strong>{job.originalName}</strong><span title={job.error}>{job.error || `${statusLabel[job.status]} · Attempt ${job.attempts || 0}`}</span></div>
-                    <div className="job-mini-progress"><span style={{ width: `${job.progress}%` }} /></div>
-                    {job.status === 'completed' ? (
-                      <a className="icon-button" href={jobDownloadUrl(batch.id, job.id)} aria-label={`Download ${job.outputName}`}><Download size={15} /></a>
-                    ) : <span className="job-percent">{job.progress}%</span>}
-                  </div>
-                ))}
+                {batch.jobs.map((job) => {
+                  const key = `${batch.id}:${job.id}`;
+                  const previewOpen = previewKey === key;
+                  const effectSummary = job.settings
+                    ? `${job.settings.motion.replace('-', ' ')} · ${job.settings.focus ?? 'center'} · ${job.settings.effectStart}–${job.settings.effectEnd}s`
+                    : statusLabel[job.status];
+                  return (
+                    <div className="job-item" key={job.id}>
+                      <div className="job-row">
+                        <div className={`job-status ${job.status}`}><StatusIcon status={job.status} /></div>
+                        <div className="job-name"><strong>{job.originalName}</strong><span title={job.error}>{job.error || `${statusLabel[job.status]} · ${effectSummary} · Attempt ${job.attempts || 0}`}</span></div>
+                        <div className="job-mini-progress"><span style={{ width: `${job.progress}%` }} /></div>
+                        {job.status === 'completed' ? (
+                          <div className="job-actions">
+                            <button className={`icon-button ${previewOpen ? 'selected' : ''}`} type="button" aria-label={`${previewOpen ? 'Close' : 'Preview'} ${job.outputName}`} aria-expanded={previewOpen} onClick={() => setPreviewKey(previewOpen ? null : key)}>{previewOpen ? <ChevronUp size={15} /> : <CirclePlay size={16} />}</button>
+                            <a className="icon-button" href={jobDownloadUrl(batch.id, job.id)} aria-label={`Download ${job.outputName}`}><Download size={15} /></a>
+                          </div>
+                        ) : <span className="job-percent">{job.progress}%</span>}
+                      </div>
+                      {previewOpen && (
+                        <div className="video-test-panel">
+                          <div><strong>Render test</strong><span>Use the playback bar to inspect timing before downloading.</span></div>
+                          <video controls playsInline preload="metadata" src={jobPreviewUrl(batch.id, job.id)}>Your browser cannot preview this video format.</video>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </article>
           );
