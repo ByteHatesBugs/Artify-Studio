@@ -16,7 +16,7 @@ const createCancelledBatch = (): Batch => ({
   name: 'Persistence test',
   status: 'cancelled',
   progress: 0,
-  settings: { duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'still', format: 'mp4', fit: 'contain', quality: 'balanced', fade: true, background: '#09090b' },
+  settings: { duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'still', focus: 'center', format: 'mp4', fit: 'contain', quality: 'balanced', fade: true, background: '#09090b' },
   createdAt: new Date().toISOString(),
   completedAt: new Date().toISOString(),
   jobs: [{
@@ -28,14 +28,14 @@ const createCancelledBatch = (): Batch => ({
     status: 'cancelled',
     progress: 0,
     attempts: 1,
-    settings: { duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'still', format: 'mp4', fit: 'contain', quality: 'balanced', fade: true, background: '#09090b' },
+    settings: { duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'still', focus: 'center', format: 'mp4', fit: 'contain', quality: 'balanced', fade: true, background: '#09090b' },
     createdAt: new Date().toISOString(),
   }],
 });
 
 describe('BatchStore', () => {
   it('persists history and restores it in a new store instance', async () => {
-    const directory = await mkdtemp(path.join(os.tmpdir(), 'artify-store-'));
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'renderflow-store-'));
     temporaryDirectories.push(directory);
     const statePath = path.join(directory, 'batches.json');
     const first = new BatchStore(statePath);
@@ -49,7 +49,7 @@ describe('BatchStore', () => {
   });
 
   it('prepares cancelled jobs for a clean retry', async () => {
-    const directory = await mkdtemp(path.join(os.tmpdir(), 'artify-store-'));
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'renderflow-store-'));
     temporaryDirectories.push(directory);
     const store = new BatchStore(path.join(directory, 'batches.json'));
     store.create(createCancelledBatch());
