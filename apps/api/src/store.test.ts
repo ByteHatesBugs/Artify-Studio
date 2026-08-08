@@ -16,7 +16,7 @@ const createCancelledBatch = (): Batch => ({
   name: 'Persistence test',
   status: 'cancelled',
   progress: 0,
-  settings: { duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'still', focus: 'center', format: 'mp4', fit: 'contain', quality: 'balanced', fade: true, background: '#09090b', audioVolume: 0.8, audioSourceStart: 0, audioVideoStart: 0, effects: [{ motion: 'still', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 }] },
+  settings: { duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'still', focus: 'center', format: 'mp4', fit: 'contain', quality: 'balanced', fade: true, background: '#09090b', effects: [{ motion: 'still', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 }] },
   createdAt: new Date().toISOString(),
   completedAt: new Date().toISOString(),
   jobs: [{
@@ -28,7 +28,7 @@ const createCancelledBatch = (): Batch => ({
     status: 'cancelled',
     progress: 0,
     attempts: 1,
-    settings: { duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'still', focus: 'center', format: 'mp4', fit: 'contain', quality: 'balanced', fade: true, background: '#09090b', audioVolume: 0.8, audioSourceStart: 0, audioVideoStart: 0, effects: [{ motion: 'still', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 }] },
+    settings: { duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'still', focus: 'center', format: 'mp4', fit: 'contain', quality: 'balanced', fade: true, background: '#09090b', effects: [{ motion: 'still', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 }] },
     createdAt: new Date().toISOString(),
   }],
 });
@@ -40,10 +40,8 @@ describe('BatchStore', () => {
     const statePath = path.join(directory, 'batches.json');
     const first = new BatchStore(statePath);
     const legacyBatch = createCancelledBatch();
-    delete (legacyBatch.settings as Partial<typeof legacyBatch.settings>).audioSourceStart;
-    delete (legacyBatch.settings as Partial<typeof legacyBatch.settings>).audioVideoStart;
-    delete (legacyBatch.jobs[0]!.settings as Partial<typeof legacyBatch.jobs[0]['settings']>).audioSourceStart;
-    delete (legacyBatch.jobs[0]!.settings as Partial<typeof legacyBatch.jobs[0]['settings']>).audioVideoStart;
+    Object.assign(legacyBatch.settings, { audioVolume: 0.8, audioSourceStart: 0, audioVideoStart: 0 });
+    Object.assign(legacyBatch.jobs[0]!.settings, { audioVolume: 0.8, audioSourceStart: 0, audioVideoStart: 0 });
     delete (legacyBatch.settings.effects[0] as Partial<(typeof legacyBatch.settings.effects)[number]>).strength;
     delete (legacyBatch.jobs[0]!.settings.effects[0] as Partial<(typeof legacyBatch.settings.effects)[number]>).strength;
     delete (legacyBatch.settings.effects[0] as Partial<(typeof legacyBatch.settings.effects)[number]>).easing;
@@ -57,8 +55,8 @@ describe('BatchStore', () => {
     expect(restored.get('batch-1')?.jobs[0]?.attempts).toBe(1);
     expect(restored.get('batch-1')?.jobs[0]?.settings.effects[0]?.strength).toBe(50);
     expect(restored.get('batch-1')?.jobs[0]?.settings.effects[0]?.easing).toBe('cinematic');
-    expect(restored.get('batch-1')?.jobs[0]?.settings.audioSourceStart).toBe(0);
-    expect(restored.get('batch-1')?.jobs[0]?.settings.audioVideoStart).toBe(0);
+    expect('audioSourceStart' in restored.get('batch-1')!.jobs[0]!.settings).toBe(false);
+    expect('audioVideoStart' in restored.get('batch-1')!.jobs[0]!.settings).toBe(false);
   });
 
   it('prepares cancelled jobs for a clean retry', async () => {
