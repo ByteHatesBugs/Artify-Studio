@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { AlertCircle, Check, ChevronUp, CirclePlay, Download, Film, Inbox, LoaderCircle, RotateCcw, Square, Trash2, X } from 'lucide-react';
 import { batchDownloadUrl, jobDownloadUrl, jobPreviewUrl } from '../api';
 import type { Batch, JobStatus } from '../types';
+import { VideoReview } from './VideoReview';
 
 interface BatchQueueProps {
   batches: Batch[];
@@ -115,8 +116,7 @@ export function BatchQueue({ batches, loading, busyIds, onCancel, onRetry, onDel
                       </div>
                       {previewOpen && (
                         <div className="video-test-panel">
-                          <div><strong>Render test</strong><span>Use the playback bar to inspect timing before downloading.</span></div>
-                          <video controls playsInline preload="metadata" src={jobPreviewUrl(batch.id, job.id)}>Your browser cannot preview this video format.</video>
+                          <VideoReview source={jobPreviewUrl(batch.id, job.id)} outputName={job.outputName} settings={job.settings} />
                         </div>
                       )}
                     </div>
