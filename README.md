@@ -11,6 +11,8 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Five motion profiles with a live first-image preview: still, zoom in, zoom out, pan left, and pan right
 - Exact effect start and end timing with motion held before and after the selected window
 - Up to eight ordered motion effects per video, each with independent focal placement and timing
+- Independent 0–100 strength control for every motion segment
+- Stabilized zoom and pan rendering with adaptive supersampling and Lanczos scaling
 - Video durations from 1 to 60 seconds
 - Per-image effect-stack overrides on top of reusable batch defaults
 - Enforced edge-to-edge cover framing for screen-filling final output
