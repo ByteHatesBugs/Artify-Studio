@@ -40,11 +40,16 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
       const ratio = (effect.strength ?? 50) / 100;
       const scale = 1 + 0.12 * ratio;
       const travel = 6 * ratio;
-      const eased = progress * progress * (3 - 2 * progress);
+      const eased = progress * progress * progress * (progress * (progress * 6 - 15) + 10);
       if (effect.motion === 'zoom-in') return `scale(${1 + (scale - 1) * eased})`;
       if (effect.motion === 'zoom-out') return `scale(${scale - (scale - 1) * eased})`;
       if (effect.motion === 'pan-left') return `scale(${scale}) translateX(${travel - travel * 2 * eased}%)`;
       if (effect.motion === 'pan-right') return `scale(${scale}) translateX(${-travel + travel * 2 * eased}%)`;
+      if (effect.motion === 'pan-up') return `scale(${scale}) translateY(${travel - travel * 2 * eased}%)`;
+      if (effect.motion === 'pan-down') return `scale(${scale}) translateY(${-travel + travel * 2 * eased}%)`;
+      const horizontal = effect.motion.endsWith('left') ? travel - travel * 2 * eased : -travel + travel * 2 * eased;
+      const vertical = effect.motion.includes('up-') ? travel - travel * 2 * eased : -travel + travel * 2 * eased;
+      if (effect.motion.startsWith('drift-')) return `scale(${scale}) translate(${horizontal}%, ${vertical}%)`;
       return 'scale(1)';
     };
     const keyframes: Keyframe[] = Array.from({ length: 121 }, (_, index) => {
