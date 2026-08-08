@@ -26,7 +26,7 @@ const { apiRouter } = await import('./routes.js');
 
 const settings: RenderJob['settings'] = {
   duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '720p', motion: 'zoom-in', focus: 'center',
-  format: 'mp4', fit: 'cover', quality: 'balanced', fade: true, background: '#09090b', audioVolume: 0.8,
+  format: 'mp4', fit: 'cover', quality: 'balanced', fade: true, background: '#09090b', audioVolume: 0.8, audioSourceStart: 0, audioVideoStart: 0,
   effects: [{ motion: 'zoom-in', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 }],
 };
 
@@ -62,5 +62,13 @@ describe('completed render editing routes', () => {
     expect(job.outputName).toBe('launch-updated.mp4');
     expect(job.settings.fit).toBe('cover');
     expect(mocks.enqueue).toHaveBeenCalledWith('batch-1', [job]);
+  });
+
+  it('serves the retained soundtrack for timeline editing', async () => {
+    job.audioPath = fileURLToPath(import.meta.url);
+    job.audioName = 'campaign soundtrack.mp3';
+    const response = await request(app).get('/api/batches/batch-1/jobs/job-1/audio');
+    expect(response.status).toBe(200);
+    expect(response.headers['content-disposition']).toContain('campaign soundtrack.mp3');
   });
 });
