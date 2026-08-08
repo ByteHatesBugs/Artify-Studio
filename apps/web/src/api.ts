@@ -67,3 +67,4 @@ export const deleteBatch = async (id: string) => {
 export const batchDownloadUrl = (id: string) => `/api/batches/${id}/download`;
 export const jobDownloadUrl = (batchId: string, jobId: string) => `/api/batches/${batchId}/jobs/${jobId}/download`;
 export const jobPreviewUrl = (batchId: string, jobId: string) => `/api/batches/${batchId}/jobs/${jobId}/preview`;
+export const jobAudioPreviewUrl = (batchId: string, jobId: string) => `/api/batches/${batchId}/jobs/${jobId}/audio`;
