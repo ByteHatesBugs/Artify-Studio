@@ -2,12 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { CircleHelp, Github, ShieldCheck, WandSparkles, X, Zap } from 'lucide-react';
 import { cancelBatch, createBatch, deleteBatch, getHealth, listBatches, renameRenderedJob, rerenderJob, retryBatch } from './api';
 import { BatchQueue } from './components/BatchQueue';
-import { AudioTrackPicker } from './components/AudioTrackPicker';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { Logo } from './components/Logo';
 import { SettingsPanel } from './components/SettingsPanel';
 import { UploadZone } from './components/UploadZone';
-import type { Batch, EffectSegment, HealthStatus, RenderJob, RenderSettings, SelectedAudio, SelectedImage } from './types';
+import type { Batch, EffectSegment, HealthStatus, RenderJob, RenderSettings, SelectedImage } from './types';
 
 const initialEffect: EffectSegment = { motion: 'zoom-in', focus: 'center', strength: 50, easing: 'cinematic', effectStart: 0, effectEnd: 5 };
 
@@ -25,9 +24,6 @@ const initialSettings: RenderSettings = {
   quality: 'balanced',
   fade: true,
   background: '#09090b',
-  audioVolume: 0.8,
-  audioSourceStart: 0,
-  audioVideoStart: 0,
   effects: [initialEffect],
 };
 
@@ -74,7 +70,6 @@ const fileKey = (file: File) => `${file.name}:${file.size}:${file.lastModified}`
 
 export default function App() {
   const [images, setImages] = useState<SelectedImage[]>([]);
-  const [audio, setAudio] = useState<SelectedAudio | undefined>();
   const [settings, setSettings] = useState(loadSettings);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [health, setHealth] = useState<HealthStatus | null>(null);
@@ -88,9 +83,7 @@ export default function App() {
   const batchSignatureRef = useRef('');
   const submitRef = useRef<() => void>(() => undefined);
   const imagesRef = useRef(images);
-  const audioRef = useRef(audio);
   imagesRef.current = images;
-  audioRef.current = audio;
 
   const refresh = useCallback(async () => {
     if (refreshInFlightRef.current) return;
@@ -158,7 +151,6 @@ export default function App() {
 
   useEffect(() => () => {
     imagesRef.current.forEach((image) => URL.revokeObjectURL(image.previewUrl));
-    if (audioRef.current) URL.revokeObjectURL(audioRef.current.previewUrl);
     if (noticeTimerRef.current) window.clearTimeout(noticeTimerRef.current);
   }, []);
 
@@ -205,22 +197,6 @@ export default function App() {
     setImages([]);
   };
 
-  const selectAudio = (file: File) => {
-    const supportedTypes = new Set(['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/aac', 'audio/ogg']);
-    if (!supportedTypes.has(file.type) || file.size > 25 * 1024 * 1024) {
-      showNotice('error', 'Use an MP3, WAV, M4A, AAC, or OGG audio file under 25 MB.');
-      return;
-    }
-    if (audio) URL.revokeObjectURL(audio.previewUrl);
-    setAudio({ file, previewUrl: URL.createObjectURL(file) });
-    changeSettings({ ...settings, audioSourceStart: 0, audioVideoStart: 0 });
-  };
-
-  const clearAudio = () => {
-    if (audio) URL.revokeObjectURL(audio.previewUrl);
-    setAudio(undefined);
-  };
-
   const changeSettings = (next: RenderSettings) => {
     const effects = normalizeEffectStack(next.effects, next.duration);
     const primary = effects[0]!;
@@ -240,9 +216,8 @@ export default function App() {
     if (!images.length || isSubmitting || !settings.name.trim() || health?.engine.ready !== true) return;
     setIsSubmitting(true);
     try {
-      const { batch } = await createBatch(images, settings, audio);
+      const { batch } = await createBatch(images, settings);
       clearImages();
-      clearAudio();
       setBatches((current) => [batch, ...current]);
       showNotice('success', 'Batch added to the render queue.');
       window.setTimeout(() => document.querySelector('#queue-heading')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
@@ -371,7 +346,6 @@ export default function App() {
         <section className="studio-layout" id="workspace">
           <div className="source-column">
             <UploadZone images={images} settings={settings} disabled={isSubmitting} onAdd={addImages} onRemove={removeImage} onMove={moveImage} onOverride={changeImageOverride} onClear={clearImages} />
-            <AudioTrackPicker audio={audio} volume={settings.audioVolume} videoDuration={settings.duration} sourceStart={settings.audioSourceStart} videoStart={settings.audioVideoStart} disabled={isSubmitting} onSelect={selectAudio} onRemove={clearAudio} onVolumeChange={(audioVolume) => changeSettings({ ...settings, audioVolume })} onSourceStartChange={(audioSourceStart) => changeSettings({ ...settings, audioSourceStart })} onVideoStartChange={(audioVideoStart) => changeSettings({ ...settings, audioVideoStart })} />
           </div>
           <SettingsPanel settings={settings} previewImage={images[0]?.previewUrl} imageCount={images.length} isSubmitting={isSubmitting} engineReady={health?.engine.ready === true} onChange={changeSettings} onReset={() => changeSettings({ ...initialSettings, name: settings.name })} onSubmit={submit} />
         </section>
