@@ -10,8 +10,10 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Duplicate detection plus drag, keyboard, and button-based source reordering
 - Five motion profiles with a live first-image preview: still, zoom in, zoom out, pan left, and pan right
 - Exact effect start and end timing with motion held before and after the selected window
-- Per-image motion, focal placement, and timing overrides on top of reusable batch defaults
+- Up to eight ordered motion effects per video, each with independent focal placement and timing
+- Per-image effect-stack overrides on top of reusable batch defaults
 - Contain and cover framing modes with configurable canvas background color
+- Full-canvas cover framing by default for screen-filling output
 - Draft, balanced, and high encoding profiles that change FFmpeg speed and output quality
 - Optional fade-in and fade-out transitions for polished clips
 - Persistent preferences and quick profiles for common campaign, social, and lightweight outputs
