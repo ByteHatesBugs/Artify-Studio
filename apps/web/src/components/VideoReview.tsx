@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { FastForward, Maximize2, Pause, Play, Rewind, Volume2, VolumeX } from 'lucide-react';
 import type { RenderJob } from '../types';
+import { resolutionAspect } from '../resolutionOptions';
 
 interface VideoReviewProps {
   source: string;
@@ -16,9 +17,8 @@ const formatTime = (seconds: number) => {
 };
 
 const aspectClass = (resolution: RenderJob['settings']['resolution']) => {
-  if (resolution === 'square') return 'is-square';
-  if (resolution === 'portrait') return 'is-portrait';
-  return 'is-landscape';
+  const aspect = resolutionAspect(resolution);
+  return `is-${aspect}`;
 };
 
 export function VideoReview({ source, outputName, settings }: VideoReviewProps) {
@@ -35,8 +35,12 @@ export function VideoReview({ source, outputName, settings }: VideoReviewProps) 
   useEffect(() => {
     if (!playing) return;
     let frame = 0;
-    const updatePlayhead = () => {
-      if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
+    let lastUpdate = 0;
+    const updatePlayhead = (timestamp: number) => {
+      if (videoRef.current && timestamp - lastUpdate >= 50) {
+        setCurrentTime(videoRef.current.currentTime);
+        lastUpdate = timestamp;
+      }
       frame = window.requestAnimationFrame(updatePlayhead);
     };
     frame = window.requestAnimationFrame(updatePlayhead);
