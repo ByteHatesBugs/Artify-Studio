@@ -14,6 +14,12 @@ const motionOptions: Array<{ value: EffectSegment['motion']; label: string }> = 
   { value: 'zoom-out', label: 'Slow zoom out' },
   { value: 'pan-left', label: 'Pan left' },
   { value: 'pan-right', label: 'Pan right' },
+  { value: 'pan-up', label: 'Pan up' },
+  { value: 'pan-down', label: 'Pan down' },
+  { value: 'drift-up-left', label: 'Drift up left' },
+  { value: 'drift-up-right', label: 'Drift up right' },
+  { value: 'drift-down-left', label: 'Drift down left' },
+  { value: 'drift-down-right', label: 'Drift down right' },
   { value: 'still', label: 'Hold frame' },
 ];
 
@@ -42,7 +48,7 @@ export function EffectStackEditor({ effects, duration, compact = false, disabled
 
   const addEffect = () => {
     if (effects.length >= 8) return;
-    const motions: EffectSegment['motion'][] = ['zoom-in', 'pan-right', 'zoom-out', 'pan-left'];
+    const motions: EffectSegment['motion'][] = ['zoom-in', 'pan-right', 'pan-up', 'drift-down-left', 'zoom-out', 'pan-left', 'pan-down', 'drift-up-right'];
     const windowLength = Math.max(0.05, duration / (effects.length + 1));
     const effectEnd = duration;
     const effectStart = Math.max(0, effectEnd - windowLength);
