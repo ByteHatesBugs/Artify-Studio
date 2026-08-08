@@ -71,4 +71,16 @@ describe('render settings validation', () => {
     });
     expect(parsed.success).toBe(false);
   });
+
+  it('accepts videos up to one minute and rejects longer durations', () => {
+    const minute = createBatchSchema.safeParse({
+      ...validSettings,
+      duration: '60',
+      effectEnd: '60',
+      effects: JSON.stringify([{ motion: 'zoom-in', focus: 'center', effectStart: 0, effectEnd: 60 }]),
+    });
+    const tooLong = createBatchSchema.safeParse({ ...validSettings, duration: '61', effectEnd: '61' });
+    expect(minute.success).toBe(true);
+    expect(tooLong.success).toBe(false);
+  });
 });
