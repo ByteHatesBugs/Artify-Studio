@@ -36,7 +36,7 @@ describe('VideoReview', () => {
     expect(screen.getByRole('slider', { name: 'Video playback position' })).toBeTruthy();
     expect(screen.getByRole('combobox', { name: 'Playback speed' })).toBeTruthy();
     expect(screen.getByText('campaign.mp4')).toBeTruthy();
-    expect(screen.getByText(/2 effects · strength-aware · full-canvas output/i)).toBeTruthy();
+    expect(screen.getByText(/2 precision effects · curve & strength aware · full canvas/i)).toBeTruthy();
     expect(container.querySelectorAll('.clip-effect')).toHaveLength(2);
   });
 });
