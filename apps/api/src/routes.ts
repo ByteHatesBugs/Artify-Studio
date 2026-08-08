@@ -29,7 +29,7 @@ export const apiRouter = Router();
 
 apiRouter.get('/health', (_request, response) => {
   const engine = mediaEngine.get();
-  response.json({ status: engine.ready ? 'ok' : 'degraded', service: 'artify-api', engine, timestamp: new Date().toISOString() });
+  response.json({ status: engine.ready ? 'ok' : 'degraded', service: 'renderflow-api', engine, timestamp: new Date().toISOString() });
 });
 
 apiRouter.get('/batches', (_request, response) => {
@@ -62,25 +62,26 @@ apiRouter.post('/batches', upload.array('images'), (request, response, next) => 
   try {
     const batchId = randomUUID();
     const createdAt = new Date().toISOString();
-    const { name, ...settings } = parsed.data;
+    const { name, jobOverrides, ...settings } = parsed.data;
     const usedNames = new Map<string, number>();
-    const jobs: RenderJob[] = files.map((file) => {
+    const jobs: RenderJob[] = files.map((file, index) => {
       const stem = safeStem(file.originalname);
       const sequence = (usedNames.get(stem) ?? 0) + 1;
       usedNames.set(stem, sequence);
       const uniqueStem = sequence === 1 ? stem : `${stem}-${sequence}`;
       const id = randomUUID();
-      const outputName = `${uniqueStem}.${settings.format}`;
+      const jobSettings = { ...settings, ...(jobOverrides[index] ?? {}) };
+      const outputName = `${uniqueStem}.${jobSettings.format}`;
       return {
         id,
         originalName: file.originalname,
         inputPath: file.path,
-        outputPath: path.join(storagePaths.outputs, `${id}.${settings.format}`),
+        outputPath: path.join(storagePaths.outputs, `${id}.${jobSettings.format}`),
         outputName,
         status: 'queued',
         progress: 0,
         attempts: 0,
-        settings,
+        settings: jobSettings,
         createdAt,
       };
     });
@@ -137,6 +138,16 @@ apiRouter.get('/batches/:batchId/jobs/:jobId/download', (request, response) => {
   if (!batch || !job) return response.status(404).json({ error: 'Render not found.' });
   if (job.status !== 'completed') return response.status(409).json({ error: 'Render is not complete.' });
   return response.download(job.outputPath, job.outputName);
+});
+
+apiRouter.get('/batches/:batchId/jobs/:jobId/preview', (request, response) => {
+  const batch = batchStore.get(request.params.batchId);
+  const job = batch?.jobs.find((candidate) => candidate.id === request.params.jobId);
+  if (!batch || !job) return response.status(404).json({ error: 'Render not found.' });
+  if (job.status !== 'completed') return response.status(409).json({ error: 'Render is not complete.' });
+  response.setHeader('Content-Disposition', `inline; filename="${job.outputName}"`);
+  response.setHeader('Cache-Control', 'private, max-age=3600');
+  return response.sendFile(job.outputPath);
 });
 
 apiRouter.get('/batches/:batchId/download', async (request, response, next) => {
