@@ -30,6 +30,7 @@ export function VideoReview({ source, outputName, settings }: VideoReviewProps) 
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(1);
   const [rate, setRate] = useState(1);
+  const [buffered, setBuffered] = useState(0);
 
   useEffect(() => {
     if (!playing) return;
@@ -116,6 +117,10 @@ export function VideoReview({ source, outputName, settings }: VideoReviewProps) 
             src={source}
             onClick={() => void togglePlayback()}
             onLoadedMetadata={(event) => setDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : settings.duration)}
+            onProgress={(event) => {
+              const video = event.currentTarget;
+              if (video.buffered.length && video.duration) setBuffered((video.buffered.end(video.buffered.length - 1) / video.duration) * 100);
+            }}
             onPlay={() => setPlaying(true)}
             onPause={() => { setPlaying(false); setCurrentTime(videoRef.current?.currentTime ?? 0); }}
             onEnded={() => { setPlaying(false); setCurrentTime(duration); }}
@@ -125,6 +130,14 @@ export function VideoReview({ source, outputName, settings }: VideoReviewProps) 
       </div>
 
       <div className="video-control-bar">
+        <div className="transport-scrubber">
+          <div aria-hidden="true">
+            <span className="buffered" style={{ width: `${buffered}%` }} />
+            <span className="played" style={{ width: `${progress}%` }} />
+            {effects.slice(1).map((effect, index) => <i key={`${effect.effectStart}-${index}`} style={{ left: `${duration ? (effect.effectStart / duration) * 100 : 0}%` }} />)}
+          </div>
+          <input aria-label="Video playback position" type="range" min={0} max={duration || 0.1} step={0.01} value={Math.min(currentTime, duration)} onChange={(event) => seek(Number(event.target.value))} />
+        </div>
         <div className="playback-controls">
           <button type="button" aria-label="Go back one second" onClick={() => seek(currentTime - 1)}><Rewind size={15} /></button>
           <button className="primary-play" type="button" aria-label={playing ? 'Pause preview' : 'Play preview'} onClick={() => void togglePlayback()}>{playing ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}</button>
