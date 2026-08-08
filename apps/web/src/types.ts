@@ -6,6 +6,13 @@ export type QualityProfile = 'draft' | 'balanced' | 'high';
 export type EffectFocus = 'center' | 'top' | 'bottom' | 'left' | 'right';
 export type JobStatus = 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
+export interface EffectSegment {
+  motion: MotionEffect;
+  focus: EffectFocus;
+  effectStart: number;
+  effectEnd: number;
+}
+
 export interface RenderSettings {
   name: string;
   duration: number;
@@ -20,13 +27,11 @@ export interface RenderSettings {
   quality: QualityProfile;
   fade: boolean;
   background: string;
+  effects: EffectSegment[];
 }
 
 export interface ImageEffectOverride {
-  motion: MotionEffect;
-  focus: EffectFocus;
-  effectStart: number;
-  effectEnd: number;
+  effects: EffectSegment[];
 }
 
 export interface RenderJob {
