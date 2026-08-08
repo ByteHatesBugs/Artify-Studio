@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { CircleHelp, Github, ShieldCheck, WandSparkles, X, Zap } from 'lucide-react';
+import { CircleHelp, Download, Github, Images, ShieldCheck, SlidersHorizontal, WandSparkles, X, Zap } from 'lucide-react';
 import { cancelBatch, createBatch, deleteBatch, getHealth, listBatches, renameRenderedJob, rerenderJob, retryBatch } from './api';
 import { BatchQueue } from './components/BatchQueue';
 import { ConfirmDialog } from './components/ConfirmDialog';
@@ -324,8 +324,8 @@ export default function App() {
           <a href="#queue-heading">Renders</a>
         </nav>
         <div className="header-actions">
-          <a className="icon-button" href="https://github.com/ByteHatesBugs/RenderFlow" target="_blank" rel="noreferrer" aria-label="View project on GitHub"><Github size={18} /></a>
-          <button className="help-button" type="button" onClick={() => showNotice('success', 'Tip: use Full HD and slow zoom for the most versatile campaign output.')}><CircleHelp size={16} /> Help</button>
+          <a className="icon-button" href="https://github.com/ByteHatesBugs/RF/tree/dev" target="_blank" rel="noreferrer" aria-label="View RenderFlow development branch on GitHub"><Github size={18} /></a>
+          <button className="help-button" type="button" onClick={() => showNotice('success', 'Start with a quick profile, then refine each effect’s timing, strength, curve, and speed.')}><CircleHelp size={16} /> Help</button>
         </div>
       </header>
 
@@ -333,16 +333,25 @@ export default function App() {
         <section className="hero">
           <div className="hero-copy">
             <span className={`status-pill ${health && !health.engine.ready ? 'engine-off' : ''}`} title={health?.engine.version || health?.engine.error}>
-              <span /> {health ? health.engine.ready ? 'FFmpeg engine ready' : 'Render engine unavailable' : 'Checking render engine'}
+              <span /> {health ? health.engine.ready ? 'Verified render pipeline ready' : 'Render pipeline unavailable' : 'Checking render pipeline'}
             </span>
             <h1>Still images.<br /><em>Built to move.</em></h1>
-            <p>Turn an entire image set into polished, consistent video assets—without repetitive timelines or exports.</p>
+            <p>Turn image batches into verified, screen-ready video assets with precise motion control and a production-safe render queue.</p>
           </div>
           <div className="hero-stats" aria-label="Product qualities">
             <div><span className="stat-icon"><Zap size={18} /></span><strong>Batch-first</strong><small>Up to 50 outputs</small></div>
-            <div><span className="stat-icon"><WandSparkles size={18} /></span><strong>Motion-ready</strong><small>Five clean effects</small></div>
-            <div><span className="stat-icon"><ShieldCheck size={18} /></span><strong>Queue-safe</strong><small>Controlled processing</small></div>
+            <div><span className="stat-icon"><WandSparkles size={18} /></span><strong>Precision motion</strong><small>11 effects · 5 curves</small></div>
+            <div><span className="stat-icon"><ShieldCheck size={18} /></span><strong>Verified delivery</strong><small>Size, FPS & duration checked</small></div>
           </div>
+        </section>
+
+        <section className="workflow-strip" aria-labelledby="workflow-heading">
+          <div className="workflow-title"><span className="eyebrow">Production workflow</span><h2 id="workflow-heading">Source to verified export</h2></div>
+          <ol>
+            <li><span className="workflow-number">01</span><span className="workflow-icon"><Images size={17} /></span><div><strong>Upload & order</strong><small>Build a batch of up to 50 source frames.</small></div></li>
+            <li><span className="workflow-number">02</span><span className="workflow-icon"><SlidersHorizontal size={17} /></span><div><strong>Direct the motion</strong><small>Control timing, focus, strength, curve, and speed.</small></div></li>
+            <li><span className="workflow-number">03</span><span className="workflow-icon"><Download size={17} /></span><div><strong>Review & deliver</strong><small>Preview verified outputs before downloading.</small></div></li>
+          </ol>
         </section>
 
         <section className="studio-layout" id="workspace">
@@ -355,7 +364,7 @@ export default function App() {
         <BatchQueue batches={batches} loading={isHistoryLoading} busyIds={busyIds} onCancel={(id) => requestAction('cancel', id)} onRetry={retry} onRenameJob={renameJob} onRerenderJob={updateRenderedJob} onDelete={(id) => requestAction('delete', id)} />
       </main>
 
-      <footer><Logo /><p>Batch motion production for focused creative teams.</p><span>RenderFlow · {new Date().getFullYear()}</span></footer>
+      <footer><Logo /><p>Verified batch motion production for focused creative teams.</p><span>RenderFlow · {new Date().getFullYear()}</span></footer>
       {notice && <div className={`toast ${notice.tone}`} role="status">{notice.tone === 'success' ? <Checkmark /> : <span>!</span>}<p>{notice.message}</p><button type="button" aria-label="Dismiss notification" onClick={() => setNotice(null)}><X size={14} /></button></div>}
       {pendingAction && (
         <ConfirmDialog
