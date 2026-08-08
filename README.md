@@ -11,6 +11,7 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Five motion profiles with a live first-image preview: still, zoom in, zoom out, pan left, and pan right
 - Exact effect start and end timing with motion held before and after the selected window
 - Up to eight ordered motion effects per video, each with independent focal placement and timing
+- Video durations from 1 to 60 seconds
 - Per-image effect-stack overrides on top of reusable batch defaults
 - Contain and cover framing modes with configurable canvas background color
 - Full-canvas cover framing by default for screen-filling output
@@ -24,6 +25,8 @@ The interface is designed for repeatable creative work: previews before upload, 
 - Durable batch history with automatic recovery after server restarts
 - Safe cancellation, failed-job retries, individual downloads, and batch ZIP archives
 - Inline video players with seek controls for checking completed renders before download
+- Professional buffered transport controls with effect markers, timecode, speed, volume, and fullscreen
+- Rename-only updates and safe edit-and-rerender workflows for completed videos
 - Filterable render history with loading, empty, busy, confirmation, and notification states
 - Responsive, keyboard-accessible interface
 - Lazy preview decoding and viewport-aware rendering for smooth large-batch editing
