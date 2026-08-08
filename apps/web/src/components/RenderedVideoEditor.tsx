@@ -3,11 +3,9 @@ import { Clapperboard, Clock3, Crop, Gauge, MonitorUp, RefreshCw, Save, X } from
 import type { RenderJob } from '../types';
 import { resolutionOptions } from '../resolutionOptions';
 import { EffectStackEditor } from './EffectStackEditor';
-import { AudioTimeline } from './AudioTimeline';
 
 interface RenderedVideoEditorProps {
   job: RenderJob;
-  audioSource?: string;
   busy: boolean;
   onRename: (outputName: string) => void;
   onRerender: (outputName: string, settings: RenderJob['settings']) => void;
@@ -16,12 +14,10 @@ interface RenderedVideoEditorProps {
 
 const withoutExtension = (name: string) => name.replace(/\.[^.]+$/, '');
 
-export function RenderedVideoEditor({ job, audioSource, busy, onRename, onRerender, onClose }: RenderedVideoEditorProps) {
+export function RenderedVideoEditor({ job, busy, onRename, onRerender, onClose }: RenderedVideoEditorProps) {
   const [outputName, setOutputName] = useState(() => withoutExtension(job.outputName));
   const [settings, setSettings] = useState<RenderJob['settings']>(() => ({
     ...job.settings,
-    audioSourceStart: job.settings.audioSourceStart ?? 0,
-    audioVideoStart: job.settings.audioVideoStart ?? 0,
     effects: (job.settings.effects?.length ? job.settings.effects : [{ motion: job.settings.motion, focus: job.settings.focus, strength: 50, easing: 'cinematic' as const, effectStart: job.settings.effectStart, effectEnd: job.settings.effectEnd }]).map((effect) => ({ ...effect, strength: effect.strength ?? 50, easing: effect.easing ?? 'cinematic' })),
   }));
 
@@ -36,7 +32,7 @@ export function RenderedVideoEditor({ job, audioSource, busy, onRename, onRerend
         effectEnd: Number(((effect.effectEnd / current.duration) * safeDuration).toFixed(2)),
       }));
       const primary = effects[0]!;
-      return { ...current, duration: safeDuration, audioVideoStart: Math.min(current.audioVideoStart, Math.max(0, safeDuration - 0.05)), effects, motion: primary.motion, focus: primary.focus, effectStart: primary.effectStart, effectEnd: primary.effectEnd };
+      return { ...current, duration: safeDuration, effects, motion: primary.motion, focus: primary.focus, effectStart: primary.effectStart, effectEnd: primary.effectEnd };
     });
   };
 
@@ -74,8 +70,6 @@ export function RenderedVideoEditor({ job, audioSource, busy, onRename, onRerend
         <button type="button" role="switch" aria-checked={settings.fade} onClick={() => update('fade', !settings.fade)}><span className={`switch ${settings.fade ? 'on' : ''}`}><span /></span><span><strong>Fade transition</strong><small>Fade in and out</small></span></button>
         <label><span>Canvas background</span><div><input type="color" value={settings.background} onChange={(event) => update('background', event.target.value)} /><code>{settings.background}</code></div></label>
       </div>
-
-      {job.audioName && audioSource && <div className="render-audio-editor"><strong title={job.audioName}>{job.audioName}</strong><AudioTimeline source={audioSource} name={job.audioName} videoDuration={settings.duration} sourceStart={settings.audioSourceStart} videoStart={settings.audioVideoStart} volume={settings.audioVolume} disabled={busy} onSourceStartChange={(audioSourceStart) => update('audioSourceStart', audioSourceStart)} onVideoStartChange={(audioVideoStart) => update('audioVideoStart', audioVideoStart)} onVolumeChange={(audioVolume) => update('audioVolume', audioVolume)} /></div>}
 
       <div className="render-edit-footer">
         <p>The previous video stays available unless the updated render finishes successfully.</p>
