@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CircleHelp, Github, ShieldCheck, WandSparkles, X, Zap } from 'lucide-react';
-import { cancelBatch, createBatch, deleteBatch, getHealth, listBatches, retryBatch } from './api';
+import { cancelBatch, createBatch, deleteBatch, getHealth, listBatches, renameRenderedJob, rerenderJob, retryBatch } from './api';
 import { BatchQueue } from './components/BatchQueue';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { Logo } from './components/Logo';
 import { SettingsPanel } from './components/SettingsPanel';
 import { UploadZone } from './components/UploadZone';
-import type { Batch, EffectSegment, HealthStatus, RenderSettings, SelectedImage } from './types';
+import type { Batch, EffectSegment, HealthStatus, RenderJob, RenderSettings, SelectedImage } from './types';
 
 const initialEffect: EffectSegment = { motion: 'zoom-in', focus: 'center', effectStart: 0, effectEnd: 5 };
 
@@ -241,6 +241,32 @@ export default function App() {
     }
   };
 
+  const renameJob = async (batchId: string, jobId: string, outputName: string) => {
+    setActionBusy(batchId, true);
+    try {
+      const { batch } = await renameRenderedJob(batchId, jobId, outputName);
+      setBatches((current) => current.map((candidate) => candidate.id === batchId ? batch : candidate));
+      showNotice('success', 'Video renamed successfully.');
+    } catch (error) {
+      showNotice('error', error instanceof Error ? error.message : 'The video could not be renamed.');
+    } finally {
+      setActionBusy(batchId, false);
+    }
+  };
+
+  const updateRenderedJob = async (batchId: string, jobId: string, outputName: string, jobSettings: RenderJob['settings']) => {
+    setActionBusy(batchId, true);
+    try {
+      const { batch } = await rerenderJob(batchId, jobId, outputName, jobSettings);
+      setBatches((current) => current.map((candidate) => candidate.id === batchId ? batch : candidate));
+      showNotice('success', 'Updated video added to the render queue. The previous version is protected until it finishes.');
+    } catch (error) {
+      showNotice('error', error instanceof Error ? error.message : 'The video could not be updated.');
+    } finally {
+      setActionBusy(batchId, false);
+    }
+  };
+
   const requestAction = (kind: PendingAction['kind'], id: string) => {
     const batch = batches.find((candidate) => candidate.id === id);
     if (batch) setPendingAction({ kind, id, name: batch.name });
@@ -289,7 +315,7 @@ export default function App() {
           <SettingsPanel settings={settings} previewImage={images[0]?.previewUrl} imageCount={images.length} isSubmitting={isSubmitting} engineReady={health?.engine.ready === true} onChange={changeSettings} onReset={() => changeSettings({ ...initialSettings, name: settings.name })} onSubmit={submit} />
         </section>
 
-        <BatchQueue batches={batches} loading={isHistoryLoading} busyIds={busyIds} onCancel={(id) => requestAction('cancel', id)} onRetry={retry} onDelete={(id) => requestAction('delete', id)} />
+        <BatchQueue batches={batches} loading={isHistoryLoading} busyIds={busyIds} onCancel={(id) => requestAction('cancel', id)} onRetry={retry} onRenameJob={renameJob} onRerenderJob={updateRenderedJob} onDelete={(id) => requestAction('delete', id)} />
       </main>
 
       <footer><Logo /><p>Batch motion production for focused creative teams.</p><span>RenderFlow · {new Date().getFullYear()}</span></footer>
