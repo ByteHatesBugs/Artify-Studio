@@ -16,6 +16,7 @@ const initialSettings: RenderSettings = {
   fps: 30,
   resolution: '1080p',
   motion: 'zoom-in',
+  focus: 'center',
   format: 'mp4',
   fit: 'contain',
   quality: 'balanced',
@@ -25,7 +26,7 @@ const initialSettings: RenderSettings = {
 
 const loadSettings = (): RenderSettings => {
   try {
-    const saved = JSON.parse(localStorage.getItem('artify:render-settings') ?? '{}') as Partial<RenderSettings>;
+    const saved = JSON.parse(localStorage.getItem('renderflow:render-settings') ?? '{}') as Partial<RenderSettings>;
     const merged = { ...initialSettings, ...saved };
     return {
       ...merged,
@@ -69,7 +70,7 @@ export default function App() {
     void refresh();
     void getHealth().then(setHealth).catch(() => setHealth({
       status: 'degraded',
-      service: 'artify-api',
+      service: 'renderflow-api',
       engine: { ready: false, error: 'The processing server is unreachable.', checkedAt: new Date().toISOString() },
       timestamp: new Date().toISOString(),
     }));
@@ -84,7 +85,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      window.localStorage?.setItem('artify:render-settings', JSON.stringify(settings));
+      window.localStorage?.setItem('renderflow:render-settings', JSON.stringify(settings));
     } catch {
       // Private browsing and embedded contexts may disable local preferences.
     }
@@ -138,11 +139,25 @@ export default function App() {
     setImages([]);
   };
 
+  const changeSettings = (next: RenderSettings) => {
+    setSettings(next);
+    setImages((current) => current.map((image) => {
+      if (!image.effectOverride) return image;
+      const effectEnd = Math.min(image.effectOverride.effectEnd, next.duration);
+      const effectStart = Math.min(image.effectOverride.effectStart, Math.max(0, effectEnd - 0.1));
+      return { ...image, effectOverride: { ...image.effectOverride, effectStart, effectEnd } };
+    }));
+  };
+
+  const changeImageOverride = (id: string, effectOverride: SelectedImage['effectOverride']) => {
+    setImages((current) => current.map((image) => image.id === id ? { ...image, effectOverride } : image));
+  };
+
   const submit = async () => {
     if (!images.length || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      const { batch } = await createBatch(images.map((image) => image.file), settings);
+      const { batch } = await createBatch(images, settings);
       clearImages();
       setBatches((current) => [batch, ...current]);
       showNotice('success', 'Batch added to the render queue.');
@@ -221,7 +236,7 @@ export default function App() {
           <a href="#queue-heading">Renders</a>
         </nav>
         <div className="header-actions">
-          <a className="icon-button" href="https://github.com/ByteHatesBugs/Artify-Studio" target="_blank" rel="noreferrer" aria-label="View project on GitHub"><Github size={18} /></a>
+          <a className="icon-button" href="https://github.com/ByteHatesBugs/RenderFlow" target="_blank" rel="noreferrer" aria-label="View project on GitHub"><Github size={18} /></a>
           <button className="help-button" type="button" onClick={() => showNotice('success', 'Tip: use Full HD and slow zoom for the most versatile campaign output.')}><CircleHelp size={16} /> Help</button>
         </div>
       </header>
@@ -243,20 +258,20 @@ export default function App() {
         </section>
 
         <section className="studio-layout" id="workspace">
-          <UploadZone images={images} disabled={isSubmitting} onAdd={addImages} onRemove={removeImage} onMove={moveImage} onClear={clearImages} />
-          <SettingsPanel settings={settings} previewImage={images[0]?.previewUrl} imageCount={images.length} isSubmitting={isSubmitting} engineReady={health?.engine.ready === true} onChange={setSettings} onReset={() => setSettings({ ...initialSettings, name: settings.name })} onSubmit={submit} />
+          <UploadZone images={images} settings={settings} disabled={isSubmitting} onAdd={addImages} onRemove={removeImage} onMove={moveImage} onOverride={changeImageOverride} onClear={clearImages} />
+          <SettingsPanel settings={settings} previewImage={images[0]?.previewUrl} imageCount={images.length} isSubmitting={isSubmitting} engineReady={health?.engine.ready === true} onChange={changeSettings} onReset={() => changeSettings({ ...initialSettings, name: settings.name })} onSubmit={submit} />
         </section>
 
         <BatchQueue batches={batches} loading={isHistoryLoading} busyIds={busyIds} onCancel={(id) => requestAction('cancel', id)} onRetry={retry} onDelete={(id) => requestAction('delete', id)} />
       </main>
 
-      <footer><Logo /><p>Batch motion production for focused creative teams.</p><span>Artify Studio · {new Date().getFullYear()}</span></footer>
+      <footer><Logo /><p>Batch motion production for focused creative teams.</p><span>RenderFlow · {new Date().getFullYear()}</span></footer>
       {notice && <div className={`toast ${notice.tone}`} role="status">{notice.tone === 'success' ? <Checkmark /> : <span>!</span>}<p>{notice.message}</p><button type="button" aria-label="Dismiss notification" onClick={() => setNotice(null)}><X size={14} /></button></div>}
       {pendingAction && (
         <ConfirmDialog
           title={pendingAction.kind === 'cancel' ? 'Stop this render?' : 'Delete this batch?'}
           message={pendingAction.kind === 'cancel'
-            ? `Artify will safely stop “${pendingAction.name}”. Completed files remain available and unfinished files can be retried.`
+            ? `RenderFlow will safely stop “${pendingAction.name}”. Completed files remain available and unfinished files can be retried.`
             : `“${pendingAction.name}” and all of its source and output files will be permanently removed.`}
           confirmLabel={pendingAction.kind === 'cancel' ? 'Stop render' : 'Delete batch'}
           destructive={pendingAction.kind === 'delete'}
