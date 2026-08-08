@@ -32,9 +32,8 @@ const initialSettings: RenderSettings = {
 const normalizeEffectStack = (effects: EffectSegment[] | undefined, duration: number, fallback = initialEffect) => {
   const source = effects?.length ? effects.slice(0, 8) : [{ ...fallback, effectEnd: duration }];
   const normalized: EffectSegment[] = [];
-  for (const effect of [...source].sort((left, right) => left.effectStart - right.effectStart)) {
-    const previousEnd = normalized.at(-1)?.effectEnd ?? 0;
-    const effectStart = Math.max(previousEnd, Math.min(effect.effectStart, duration - 0.05));
+  for (const effect of source) {
+    const effectStart = Math.max(0, Math.min(effect.effectStart, duration - 0.05));
     const effectEnd = Math.min(duration, Math.max(effect.effectEnd, effectStart + 0.05));
     if (effectStart >= duration || effectEnd <= effectStart) continue;
     normalized.push({ ...effect, strength: effect.strength ?? 50, effectStart: Number(effectStart.toFixed(2)), effectEnd: Number(effectEnd.toFixed(2)) });
