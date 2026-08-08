@@ -29,6 +29,7 @@
             ];
 
             FFMPEG_PATH = "${pkgs.ffmpeg}/bin/ffmpeg";
+            FFPROBE_PATH = "${pkgs.ffmpeg}/bin/ffprobe";
 
             shellHook = ''
               echo "RenderFlow environment ready"
