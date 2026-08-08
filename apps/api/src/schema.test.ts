@@ -70,6 +70,13 @@ describe('render settings validation', () => {
     expect(excessive.success).toBe(false);
   });
 
+  it('accepts vertical and diagonal motion effects', () => {
+    for (const motion of ['pan-up', 'pan-down', 'drift-up-left', 'drift-up-right', 'drift-down-left', 'drift-down-right']) {
+      const parsed = createBatchSchema.safeParse({ ...validSettings, motion, effects: JSON.stringify([{ motion, focus: 'center', effectStart: 0, effectEnd: 5 }]) });
+      expect(parsed.success).toBe(true);
+    }
+  });
+
   it('accepts overlapping effect segments in stack-priority order', () => {
     const parsed = createBatchSchema.parse({
       ...validSettings,
