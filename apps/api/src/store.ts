@@ -26,6 +26,7 @@ export class BatchStore {
       batch.settings.fit ??= 'contain';
       batch.settings.quality ??= 'balanced';
       batch.settings.fade ??= true;
+      batch.settings.audioVolume ??= 0.8;
       batch.settings.effectStart ??= 0;
       batch.settings.effectEnd ??= batch.settings.duration;
       batch.settings.effects ??= [{ motion: batch.settings.motion, focus: batch.settings.focus ?? 'center', effectStart: batch.settings.effectStart, effectEnd: batch.settings.effectEnd }];
@@ -34,10 +35,18 @@ export class BatchStore {
         job.settings.fit ??= batch.settings.fit;
         job.settings.quality ??= batch.settings.quality;
         job.settings.fade ??= batch.settings.fade;
+        job.settings.audioVolume ??= batch.settings.audioVolume;
         job.settings.effectStart ??= batch.settings.effectStart;
         job.settings.effectEnd ??= batch.settings.effectEnd;
         job.settings.effects ??= [{ motion: job.settings.motion, focus: job.settings.focus ?? 'center', effectStart: job.settings.effectStart, effectEnd: job.settings.effectEnd }];
         job.attempts ??= job.startedAt ? 1 : 0;
+        if (job.audioPath) {
+          const audioExists = await access(job.audioPath).then(() => true).catch(() => false);
+          if (!audioExists) {
+            job.audioPath = undefined;
+            job.audioName = undefined;
+          }
+        }
         if (job.status === 'completed') {
           const outputExists = await access(job.outputPath).then(() => true).catch(() => false);
           if (!outputExists) Object.assign(job, { status: 'failed', progress: 0, error: 'The rendered file is missing. Retry this batch.' });
