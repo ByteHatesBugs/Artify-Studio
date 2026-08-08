@@ -8,6 +8,7 @@ export const OUTPUT_FORMATS = ['mp4', 'webm'] as const;
 export const FIT_MODES = ['contain', 'cover'] as const;
 export const QUALITY_PROFILES = ['draft', 'balanced', 'high'] as const;
 export const EFFECT_FOCUSES = ['center', 'top', 'bottom', 'left', 'right'] as const;
+export const EFFECT_EASINGS = ['cinematic', 'ease-in-out', 'ease-in', 'ease-out', 'linear'] as const;
 
 export type MotionEffect = (typeof MOTION_EFFECTS)[number];
 export type Resolution = (typeof RESOLUTIONS)[number];
@@ -15,12 +16,14 @@ export type OutputFormat = (typeof OUTPUT_FORMATS)[number];
 export type FitMode = (typeof FIT_MODES)[number];
 export type QualityProfile = (typeof QUALITY_PROFILES)[number];
 export type EffectFocus = (typeof EFFECT_FOCUSES)[number];
+export type EffectEasing = (typeof EFFECT_EASINGS)[number];
 export type JobStatus = 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
 export interface EffectSegment {
   motion: MotionEffect;
   focus: EffectFocus;
   strength: number;
+  easing?: EffectEasing;
   effectStart: number;
   effectEnd: number;
 }
