@@ -26,6 +26,23 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
   const update = <K extends keyof RenderSettings>(key: K, value: RenderSettings[K]) => onChange({ ...settings, [key]: value });
   const qualityFactor = settings.quality === 'draft' ? 0.65 : settings.quality === 'high' ? 1.6 : 1;
   const estimatedSeconds = Math.ceil((imageCount * settings.duration / 2) * qualityFactor);
+  const readyToRender = imageCount > 0 && settings.name.trim().length > 0 && engineReady;
+  const readinessMessage = !imageCount
+    ? 'Add at least one image to continue.'
+    : !settings.name.trim()
+      ? 'Enter a batch name to continue.'
+      : !engineReady
+        ? 'The render engine must be ready before exporting.'
+        : `Ready for ${imageCount} verified, silent ${settings.format.toUpperCase()} output${imageCount === 1 ? '' : 's'}.`;
+  const submitLabel = isSubmitting
+    ? 'Uploading batch…'
+    : !engineReady
+      ? 'Render engine unavailable'
+      : !imageCount
+        ? 'Add images to continue'
+        : !settings.name.trim()
+          ? 'Name your batch to continue'
+          : `Render ${imageCount} video${imageCount === 1 ? '' : 's'}`;
   const primaryEffect = settings.effects[0]!;
   const objectPosition = { center: 'center', top: 'center top', bottom: 'center bottom', left: 'left center', right: 'right center' }[primaryEffect.focus];
   const isProfileSelected = (profile: (typeof profiles)[number]) => Object.entries(profile.settings).every(([key, value]) => {
@@ -207,12 +224,18 @@ export function SettingsPanel({ settings, previewImage, imageCount, isSubmitting
         <div><span>Profile</span><strong>{settings.quality}</strong></div>
       </div>
       {imageCount > 1 && <p className="batch-settings-note">These are batch defaults. Use “Effect” on any image to set its own motion, focus, and timing.</p>}
-      <button className="primary-button" type="button" onClick={onSubmit} disabled={!imageCount || isSubmitting || !settings.name.trim() || !engineReady} title="Render batch · Ctrl or Command + Enter">
+      <div className="requirement-summary" aria-label="Video output requirements">
+        <span><strong>{resolutionOptions.find((option) => option.value === settings.resolution)?.detail}</strong> canvas</span>
+        <span><strong>{settings.duration}s</strong> duration</span>
+        <span><strong>{settings.fps}</strong> FPS</span>
+        <span><strong>Silent</strong> output</span>
+      </div>
+      <button className="primary-button" type="button" onClick={onSubmit} disabled={!readyToRender || isSubmitting} title="Render batch · Ctrl or Command + Enter" aria-describedby="render-readiness">
         {isSubmitting ? <span className="spinner" /> : <Play size={17} fill="currentColor" />}
-        {isSubmitting ? 'Uploading batch…' : !engineReady ? 'Render engine unavailable' : `Render ${imageCount || 0} video${imageCount === 1 ? '' : 's'}`}
+        {submitLabel}
         {!isSubmitting && engineReady && <kbd>Ctrl/⌘ ↵</kbd>}
       </button>
-      <p className="privacy-note">{engineReady ? 'Files stay on your processing server and expire automatically.' : 'Ask the server administrator to configure FFmpeg.'}</p>
+      <p className={`privacy-note ${readyToRender ? 'is-ready' : ''}`} id="render-readiness" aria-live="polite">{readinessMessage}</p>
     </aside>
   );
 }
