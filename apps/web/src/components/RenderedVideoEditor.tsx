@@ -26,10 +26,10 @@ export function RenderedVideoEditor({ job, busy, onRename, onRerender, onClose }
   const changeDuration = (duration: number) => {
     const safeDuration = Math.max(1, Math.min(60, duration));
     setSettings((current) => {
-      const effects = current.effects.map((effect, index) => ({
+      const effects = current.effects.map((effect) => ({
         ...effect,
         effectStart: Number(((effect.effectStart / current.duration) * safeDuration).toFixed(2)),
-        effectEnd: Number((index === current.effects.length - 1 ? safeDuration : (effect.effectEnd / current.duration) * safeDuration).toFixed(2)),
+        effectEnd: Number(((effect.effectEnd / current.duration) * safeDuration).toFixed(2)),
       }));
       const primary = effects[0]!;
       return { ...current, duration: safeDuration, effects, motion: primary.motion, focus: primary.focus, effectStart: primary.effectStart, effectEnd: primary.effectEnd };
