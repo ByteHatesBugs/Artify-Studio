@@ -97,15 +97,14 @@ export function VideoReview({ source, outputName, settings }: VideoReviewProps) 
   };
 
   const progress = duration ? (currentTime / duration) * 100 : 0;
-  const effectLeft = duration ? (settings.effectStart / duration) * 100 : 0;
-  const effectWidth = duration ? ((settings.effectEnd - settings.effectStart) / duration) * 100 : 100;
+  const effects = settings.effects?.length ? settings.effects : [{ motion: settings.motion, focus: settings.focus, effectStart: settings.effectStart, effectEnd: settings.effectEnd }];
   const rulerMarks = Array.from({ length: 6 }, (_, index) => (duration / 5) * index);
 
   return (
     <div className="video-review" tabIndex={0} onKeyDown={handleKeys}>
       <div className="video-review-heading">
         <div><strong>Video review</strong><span>Preview the final timing and motion before download</span></div>
-        <span>{settings.resolution} · {settings.format.toUpperCase()} · {settings.fps} FPS</span>
+        <span>Full canvas · {settings.resolution} · {settings.format.toUpperCase()} · {settings.fps} FPS</span>
       </div>
 
       <div className="video-stage-shell">
@@ -147,8 +146,15 @@ export function VideoReview({ source, outputName, settings }: VideoReviewProps) 
           {rulerMarks.map((mark) => <span key={mark} style={{ left: `${duration ? (mark / duration) * 100 : 0}%` }}>{formatTime(mark)}</span>)}
         </div>
         <div className="timeline-clip">
-          <div className="clip-fill"><strong>{outputName}</strong><span>{settings.motion.replace('-', ' ')} · {settings.focus ?? 'center'} focus</span></div>
-          <span className="clip-effect" style={{ left: `${effectLeft}%`, width: `${effectWidth}%` }} title={`Effect ${settings.effectStart}s–${settings.effectEnd}s`} />
+          <div className="clip-fill"><strong>{outputName}</strong><span>{effects.length} effect{effects.length === 1 ? '' : 's'} · full-canvas output</span></div>
+          {effects.map((effect, index) => (
+            <span
+              className={`clip-effect effect-color-${index % 4}`}
+              key={`${effect.motion}-${index}`}
+              style={{ left: `${duration ? (effect.effectStart / duration) * 100 : 0}%`, width: `${duration ? ((effect.effectEnd - effect.effectStart) / duration) * 100 : 100}%` }}
+              title={`${index + 1}. ${effect.motion.replace('-', ' ')} ${effect.effectStart}s–${effect.effectEnd}s`}
+            />
+          ))}
           <span className="timeline-playhead" style={{ left: `${progress}%` }} aria-hidden="true"><i /></span>
           <input aria-label="Seek through preview" type="range" min={0} max={duration || 0.1} step={0.01} value={Math.min(currentTime, duration)} onChange={(event) => seek(Number(event.target.value))} />
         </div>
