@@ -15,13 +15,14 @@ const settings: RenderSettings = {
   quality: 'balanced',
   fade: true,
   background: '#09090b',
+  audioVolume: 0.8,
   effects: [{ motion: 'zoom-in', focus: 'center', effectStart: 1, effectEnd: 4 }],
 };
 
 describe('media command construction', () => {
   it('creates a padded 1080p zoom filter', () => {
     const filter = buildVideoFilter(settings);
-    expect(filter).toContain('scale=3840:2160');
+    expect(filter).toContain('scale=2152:1210');
     expect(filter).toContain('zoompan');
     expect(filter).toContain('clip((on-30)/90,0,1)');
     expect(filter).toContain('3-2*');
@@ -45,6 +46,16 @@ describe('media command construction', () => {
     expect(args).toContain('22');
     expect(args.slice(args.indexOf('-g'), args.indexOf('-g') + 2)).toEqual(['-g', '30']);
     expect(args).toContain('+faststart');
+    expect(args).toContain('-an');
+  });
+
+  it('loops and mixes an uploaded soundtrack into the final video', () => {
+    const job = { inputPath: 'input.jpg', audioPath: 'music.mp3', outputPath: 'output.mp4', settings: { ...settings, audioVolume: 0.65 } } as RenderJob;
+    const args = buildFfmpegArgs(job);
+    expect(args.slice(args.indexOf('-stream_loop'), args.indexOf('-stream_loop') + 4)).toEqual(['-stream_loop', '-1', '-i', 'music.mp3']);
+    expect(args).toContain('volume=0.65');
+    expect(args).toContain('aac');
+    expect(args).toContain('-shortest');
   });
 
   it('supports edge-to-edge framing without transitions', () => {
