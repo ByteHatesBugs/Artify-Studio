@@ -9,7 +9,7 @@ interface QueueItem {
   job: RenderJob;
 }
 
-class RenderQueue {
+export class RenderQueue {
   private readonly waiting: QueueItem[] = [];
   private readonly running = new Map<string, ReturnType<typeof renderImage>['process']>();
   private stopping = false;
@@ -60,18 +60,32 @@ class RenderQueue {
 
     try {
       await handle.completion;
-      batchStore.updateJob(batchId, job.id, { status: 'completed', progress: 100, completedAt: new Date().toISOString() });
+      if (job.supersededOutputPath) await unlink(job.supersededOutputPath).catch(() => undefined);
+      batchStore.updateJob(batchId, job.id, { status: 'completed', progress: 100, completedAt: new Date().toISOString(), supersededOutputPath: undefined, supersededOutputName: undefined });
     } catch (error) {
       if (this.stopping) return;
       const latest = batchStore.get(batchId)?.jobs.find((candidate) => candidate.id === job.id);
       const cancelled = latest?.status === 'cancelled';
-      batchStore.updateJob(batchId, job.id, {
-        status: cancelled ? 'cancelled' : 'failed',
-        progress: cancelled ? latest.progress : 0,
-        error: cancelled ? undefined : error instanceof Error ? error.message : 'Render failed',
-        completedAt: new Date().toISOString(),
-      });
       await unlink(job.outputPath).catch(() => undefined);
+      if (job.supersededOutputPath) {
+        batchStore.updateJob(batchId, job.id, {
+          outputPath: job.supersededOutputPath,
+          outputName: job.supersededOutputName ?? job.outputName,
+          supersededOutputPath: undefined,
+          supersededOutputName: undefined,
+          status: 'completed',
+          progress: 100,
+          error: cancelled ? 'Update cancelled; the previous render was kept.' : `Update failed; the previous render was kept. ${error instanceof Error ? error.message : 'Render failed'}`,
+          completedAt: new Date().toISOString(),
+        });
+      } else {
+        batchStore.updateJob(batchId, job.id, {
+          status: cancelled ? 'cancelled' : 'failed',
+          progress: cancelled ? latest.progress : 0,
+          error: cancelled ? undefined : error instanceof Error ? error.message : 'Render failed',
+          completedAt: new Date().toISOString(),
+        });
+      }
     } finally {
       this.running.delete(key);
       this.drain();
