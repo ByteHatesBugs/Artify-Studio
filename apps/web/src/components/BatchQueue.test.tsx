@@ -7,7 +7,7 @@ import { BatchQueue } from './BatchQueue';
 const settings: Batch['settings'] = {
   duration: 5, effectStart: 0, effectEnd: 5, fps: 30, resolution: '1080p', motion: 'zoom-in', focus: 'center',
   format: 'mp4', fit: 'cover', quality: 'balanced', fade: true, background: '#09090b', audioVolume: 0.8,
-  effects: [{ motion: 'zoom-in', focus: 'center', effectStart: 0, effectEnd: 5 }],
+  effects: [{ motion: 'zoom-in', focus: 'center', strength: 50, effectStart: 0, effectEnd: 5 }],
 };
 
 const batches: Batch[] = [
