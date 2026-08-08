@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Clapperboard, Clock3, Crop, Gauge, MonitorUp, RefreshCw, Save, X } from 'lucide-react';
+import { Clapperboard, Clock3, Crop, Gauge, MonitorUp, RefreshCw, Save, Volume2, X } from 'lucide-react';
 import type { RenderJob } from '../types';
+import { resolutionOptions } from '../resolutionOptions';
 import { EffectStackEditor } from './EffectStackEditor';
 
 interface RenderedVideoEditorProps {
@@ -56,8 +57,8 @@ export function RenderedVideoEditor({ job, busy, onRename, onRerender, onClose }
 
       <div className="render-edit-grid">
         <label><span><Clock3 size={13} /> Duration</span><div className="duration-edit"><input type="number" min={1} max={60} step={1} value={settings.duration} onChange={(event) => changeDuration(Number(event.target.value))} /><small>seconds · max 60</small></div></label>
-        <label><span><MonitorUp size={13} /> Canvas</span><select value={settings.resolution} onChange={(event) => update('resolution', event.target.value as RenderJob['settings']['resolution'])}><option value="720p">HD · 1280×720</option><option value="1080p">Full HD · 1920×1080</option><option value="square">Square · 1080×1080</option><option value="portrait">Portrait · 1080×1920</option></select></label>
-        <label><span><Crop size={13} /> Framing</span><select value={settings.fit} onChange={(event) => update('fit', event.target.value as RenderJob['settings']['fit'])}><option value="cover">Fill full canvas</option><option value="contain">Fit entire image</option></select></label>
+        <label><span><MonitorUp size={13} /> Canvas</span><select value={settings.resolution} onChange={(event) => update('resolution', event.target.value as RenderJob['settings']['resolution'])}>{resolutionOptions.map((option) => <option key={option.value} value={option.value}>{option.label} · {option.detail}</option>)}</select></label>
+        <label><span><Crop size={13} /> Framing</span><div className="locked-format">FULL FRAME <small>Edge-to-edge output</small></div></label>
         <label><span><Gauge size={13} /> Frame rate</span><select value={settings.fps} onChange={(event) => update('fps', Number(event.target.value))}><option value={24}>24 FPS</option><option value={30}>30 FPS</option><option value={60}>60 FPS</option></select></label>
         <label><span><Gauge size={13} /> Quality</span><select value={settings.quality} onChange={(event) => update('quality', event.target.value as RenderJob['settings']['quality'])}><option value="draft">Draft · Fast</option><option value="balanced">Balanced</option><option value="high">High · Detailed</option></select></label>
         <label><span><Clapperboard size={13} /> Format</span><div className="locked-format">{settings.format.toUpperCase()} <small>Create a new render to change format</small></div></label>
@@ -68,6 +69,7 @@ export function RenderedVideoEditor({ job, busy, onRename, onRerender, onClose }
       <div className="render-edit-options">
         <button type="button" role="switch" aria-checked={settings.fade} onClick={() => update('fade', !settings.fade)}><span className={`switch ${settings.fade ? 'on' : ''}`}><span /></span><span><strong>Fade transition</strong><small>Fade in and out</small></span></button>
         <label><span>Canvas background</span><div><input type="color" value={settings.background} onChange={(event) => update('background', event.target.value)} /><code>{settings.background}</code></div></label>
+        {job.audioName && <label className="render-audio-volume"><span><Volume2 size={13} /> Soundtrack mix</span><div><input aria-label="Soundtrack mix volume" type="range" min={0} max={1} step={0.05} value={settings.audioVolume} onChange={(event) => update('audioVolume', Number(event.target.value))} /><code>{Math.round(settings.audioVolume * 100)}%</code></div><small title={job.audioName}>{job.audioName}</small></label>}
       </div>
 
       <div className="render-edit-footer">
