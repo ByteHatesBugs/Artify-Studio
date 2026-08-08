@@ -7,11 +7,17 @@ describe('AudioTrackPicker', () => {
   it('previews a soundtrack and exposes mix and removal controls', () => {
     const onRemove = vi.fn();
     const onVolumeChange = vi.fn();
-    render(<AudioTrackPicker audio={{ file: new File(['music'], 'launch.mp3', { type: 'audio/mpeg' }), previewUrl: 'blob:music' }} volume={0.8} onSelect={vi.fn()} onRemove={onRemove} onVolumeChange={onVolumeChange} />);
+    const onSourceStartChange = vi.fn();
+    const onVideoStartChange = vi.fn();
+    render(<AudioTrackPicker audio={{ file: new File(['music'], 'launch.mp3', { type: 'audio/mpeg' }), previewUrl: 'blob:music' }} volume={0.8} videoDuration={10} sourceStart={2.5} videoStart={1} onSelect={vi.fn()} onRemove={onRemove} onVolumeChange={onVolumeChange} onSourceStartChange={onSourceStartChange} onVideoStartChange={onVideoStartChange} />);
 
     expect(screen.getByText('launch.mp3')).toBeTruthy();
     fireEvent.change(screen.getByRole('slider', { name: /soundtrack volume/i }), { target: { value: '0.55' } });
     expect(onVolumeChange).toHaveBeenCalledWith(0.55);
+    fireEvent.change(screen.getByRole('spinbutton', { name: /start time in soundtrack/i }), { target: { value: '4.2' } });
+    fireEvent.change(screen.getByRole('spinbutton', { name: /soundtrack start time in video/i }), { target: { value: '3' } });
+    expect(onSourceStartChange).toHaveBeenCalledWith(4.2);
+    expect(onVideoStartChange).toHaveBeenCalledWith(3);
     fireEvent.click(screen.getByRole('button', { name: /remove soundtrack/i }));
     expect(onRemove).toHaveBeenCalledOnce();
   });
